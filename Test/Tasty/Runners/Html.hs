@@ -23,7 +23,6 @@ import qualified Control.Monad.State as State
 import qualified Data.Functor.Compose as Functor
 import qualified Data.IntMap as IntMap
 import qualified Test.Tasty.Options as Tasty
-import qualified Test.Tasty.Providers as Tasty
 import qualified Test.Tasty.Runners as Tasty
 import qualified Text.XML.Light as XML
 
@@ -99,9 +98,6 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 | otherwise -> pure $
                     (mkFailure (Tasty.resultDescription result))
                       { summaryFailures = Sum 1 }
-
-              Tasty.Exception e -> pure $
-                (mkFailure (show e)) { summaryErrors = Sum 1 }
 
               -- Otherwise the test has either not been started or is currently
               -- executing
