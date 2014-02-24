@@ -1,0 +1,30 @@
+name: tasty-html
+version: 0.0.0.1
+synopsis: Render tasty output to Html
+description: A tasty ingredient to output test results in Html. 
+homepage: https://github.com/feuerbach/tasty-html
+license: BSD3
+license-file: LICENSE
+author: Roman Cheplyaka
+maintainer: roma@ro-che.info
+copyright: Roman Cheplyaka 2014
+category: Testing
+build-type: Simple
+cabal-version:       >=1.10
+
+library
+  exposed-modules: Test.Tasty.Runners.Html
+  build-depends:
+    base >= 4.5 && < 5,
+    containers >= 0.5.0.0,
+    generic-deriving >= 1.6.2,
+    mtl >= 2.1.2,
+    reducers >= 3.10.1,
+    stm >= 2.4.2,
+    tagged >= 0.7,
+    tasty >= 0.7,
+    transformers >= 0.3.0.0,
+    xml,
+    blaze-html 
+  default-language: Haskell98
+  ghc-options: -Wall -O2
