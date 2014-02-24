@@ -25,6 +25,6 @@ library
     tasty >= 0.7,
     transformers >= 0.3.0.0,
     xml,
-    blaze-html 
+    blaze-html
   default-language: Haskell98
   ghc-options: -Wall -O2
