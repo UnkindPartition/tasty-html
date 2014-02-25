@@ -7,6 +7,7 @@
 -- | Run a 'Tasty.TestTree' and produce an HTML file summarising the test results.
 module Test.Tasty.Runners.Html (htmlRunner) where
 
+import Debug.Trace
 import Control.Applicative
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
@@ -127,5 +128,6 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 H.p ! HA.class_ "summaryErrors" $ H.toHtml . show . getSum $ summaryErrors summary
                 H.p ! HA.class_ "summaryFailures" $ H.toHtml . show . getSum $ summaryFailures summary
                 H.div ! HA.class_  "tests" $ H.toHtml $ show tests
+                H.toHtml $ htmlRenderer summary
 
         return (getSum ((summaryFailures `mappend` summaryErrors) summary) == 0)
