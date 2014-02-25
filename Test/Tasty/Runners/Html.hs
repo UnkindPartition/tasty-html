@@ -24,7 +24,6 @@ import qualified Data.Functor.Compose as Functor
 import qualified Data.IntMap as IntMap
 import qualified Test.Tasty.Options as Tasty
 import qualified Test.Tasty.Runners as Tasty
--- import qualified Text.XML.Light as XML
 import Text.Blaze.Html5 ((!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as HA
