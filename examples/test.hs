@@ -5,7 +5,6 @@ import Test.Tasty.Runners.Html
 import Data.List
 import Data.Ord
 
-
 main = defaultMainWithIngredients [htmlRunner] tests
 
 tests :: TestTree

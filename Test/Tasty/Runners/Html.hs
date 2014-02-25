@@ -81,9 +81,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             let testCaseContent = H.toMarkup testName
 
                 mkSummary contents =
-                  mempty { htmlRenderer =
-                            ((H.li ! HA.class_ "testcase" $ contents))
-                         }
+                  mempty { htmlRenderer = H.li ! HA.class_ "testcase" $ contents }
 
                 mkSuccess = (mkSummary testCaseContent) { summarySuccesses = Sum 1 }
 
