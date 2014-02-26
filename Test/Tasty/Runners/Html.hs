@@ -103,8 +103,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
-          let grouped = htmlRenderer soFar `mappend`
-                (H.ul ! HA.class_ "testsuite" $ H.toMarkup groupName)
+          let grouped = H.ul ! HA.class_ "testsuite" $ do
+              htmlRenderer soFar
+              H.toMarkup groupName
 
           pure $ Const
             soFar { htmlRenderer = grouped
@@ -126,7 +127,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 H.p "summaryErrors"
                 H.p ! HA.class_ "summaryErrors" $ H.toHtml . show . getSum $ summaryErrors summary
                 H.p ! HA.class_ "summaryFailures" $ H.toHtml . show . getSum $ summaryFailures summary
-                H.div ! HA.class_  "tests" $ H.toHtml $ show tests
+                H.p ! HA.class_  "tests" $ H.toHtml $ show tests
                 H.toHtml $ htmlRenderer summary
 
         return (getSum ((summaryFailures `mappend` summaryErrors) summary) == 0)
