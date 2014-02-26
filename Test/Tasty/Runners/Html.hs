@@ -7,7 +7,6 @@
 -- | Run a 'Tasty.TestTree' and produce an HTML file summarising the test results.
 module Test.Tasty.Runners.Html (htmlRunner) where
 
-import Debug.Trace
 import Control.Applicative
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
