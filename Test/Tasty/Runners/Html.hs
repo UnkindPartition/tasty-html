@@ -85,14 +85,21 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             let testCaseContent = H.toMarkup testName
 
                 mkSummary contents =
-                  mempty { htmlRenderer = H.li ! HA.class_ "success"
-                                               $ contents }
+                  mempty { htmlRenderer = H.li ! HA.class_ "parent_li"
+                                               ! H.customAttribute "role" "treeitem"
+                                        $ H.span ! HA.class_ "badge badge-success"
+                                        $ contents
+                         }
 
                 mkSuccess = (mkSummary testCaseContent)
                             { summarySuccesses = Sum 1 }
 
                 mkFailure reason =
-                  mkSummary (H.li ! HA.class_ "failure" $ H.toMarkup reason)
+                  mkSummary ( H.li ! HA.class_ "parent_li"
+                                   ! H.customAttribute "role" "treeitem"
+                            $ H.span ! HA.class_ "badge badge-important"
+                            $ H.toMarkup reason
+                            )
 
             case status of
               -- If the test is done, generate HTML for it
@@ -109,9 +116,11 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
-          let grouped = H.ul ! HA.class_ "group" $ do
-              H.toMarkup groupName
-              htmlRenderer soFar
+          let grouped = H.ul ! H.customAttribute "role" "tree"
+                             $ H.li ! HA.class_ "parent_li"
+                                    ! H.customAttribute "role" "treeitem"
+                             $ do H.span $ H.toMarkup groupName
+                                  htmlRenderer soFar
 
           pure $ Const
             soFar { htmlRenderer = grouped }
@@ -142,7 +151,8 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                     H.li ! HA.class_ "success" $ H.toHtml . getSum
                                                $ summarySuccesses summary
                     H.li ! HA.id  "total" $ H.toHtml tests
-                H.toHtml $ htmlRenderer summary
+                H.div ! HA.class_ "tree well" $
+                    H.toHtml $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 
