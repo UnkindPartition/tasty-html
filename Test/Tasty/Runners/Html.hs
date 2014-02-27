@@ -8,6 +8,7 @@
 module Test.Tasty.Runners.Html (htmlRunner) where
 
 import Control.Applicative
+import Control.Monad ((>=>))
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(..), Sum(..))
@@ -18,6 +19,7 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import Generics.Deriving.Monoid (memptydefault, mappenddefault)
 
+import qualified Data.ByteString as B
 import qualified Control.Concurrent.STM as STM
 import qualified Control.Monad.State as State
 import qualified Data.Functor.Compose as Functor
@@ -28,6 +30,9 @@ import Text.Blaze.Html5 ((!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as HA
 import Text.Blaze.Html.Renderer.String (renderHtml)
+
+import Paths_tasty_html (getDataFileName)
+
 --------------------------------------------------------------------------------
 newtype HtmlPath = HtmlPath FilePath
   deriving (Typeable)
@@ -121,10 +126,15 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             options
             testTree
 
+        css <- includeMarkup "/data/bootstrap-combined.min.css"
+        js  <- includeMarkup "/data/jquery-2.1.0.min.js"
+
         writeFile path $
           renderHtml $
             H.docTypeHtml $ do
-              H.head $ H.title "Test Results"
+              H.head $ do H.title "Test Results"
+                          H.style css
+                          H.script js
               H.body $ do
                 H.ul ! HA.id "summary" $ do
                     H.li ! HA.class_ "failure" $ H.toHtml . getSum
@@ -135,3 +145,5 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 H.toHtml $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
+
+  includeMarkup = getDataFileName >=> B.readFile >=> return . H.unsafeByteString

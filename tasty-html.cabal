@@ -12,10 +12,15 @@ category: Testing
 build-type: Simple
 cabal-version:       >=1.10
 
+data-files:
+  data/bootstrap-combined.min.css
+  data/jquery-2.1.0.min.js
+
 library
   exposed-modules: Test.Tasty.Runners.Html
   build-depends:
     base >= 4.5 && < 5,
+    bytestring >= 0.10,
     containers >= 0.5.0.0,
     generic-deriving >= 1.6.2,
     mtl >= 2.1.2,
