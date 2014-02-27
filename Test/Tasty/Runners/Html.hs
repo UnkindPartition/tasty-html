@@ -80,9 +80,11 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             let testCaseContent = H.toMarkup testName
 
                 mkSummary contents =
-                  mempty { htmlRenderer = H.li ! HA.class_ "testcase" $ contents }
+                  mempty { htmlRenderer = H.li ! HA.class_ "testcase"
+                                               $ contents }
 
-                mkSuccess = (mkSummary testCaseContent) { summarySuccesses = Sum 1 }
+                mkSuccess = (mkSummary testCaseContent)
+                            { summarySuccesses = Sum 1 }
 
                 mkFailure reason =
                   mkSummary (H.li ! HA.class_ "failure" $ H.toMarkup reason)
@@ -114,7 +116,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
         (Const summary, tests) <-
           flip State.runStateT 0 $ Functor.getCompose $ getTraversal $
           Tasty.foldTestTree
-            Tasty.trivialFold { Tasty.foldSingle = runTest, Tasty.foldGroup = runGroup }
+            Tasty.trivialFold { Tasty.foldSingle = runTest
+                              , Tasty.foldGroup = runGroup
+                              }
             options
             testTree
 
@@ -123,7 +127,8 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             H.docTypeHtml $ do
               H.head $ H.title "Test Results"
               H.body $ do
-                H.p ! HA.class_ "summaryFailures" $ H.toHtml . show . getSum $ summaryFailures summary
+                H.p ! HA.class_ "summaryFailures" $ H.toHtml . show . getSum
+                                                  $ summaryFailures summary
                 H.p ! HA.class_  "tests" $ H.toHtml $ show tests
                 H.toHtml $ htmlRenderer summary
 
