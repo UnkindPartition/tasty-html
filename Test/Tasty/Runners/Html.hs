@@ -80,7 +80,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             let testCaseContent = H.toMarkup testName
 
                 mkSummary contents =
-                  mempty { htmlRenderer = H.li ! HA.class_ "testcase"
+                  mempty { htmlRenderer = H.li ! HA.class_ "success"
                                                $ contents }
 
                 mkSuccess = (mkSummary testCaseContent)
@@ -104,13 +104,12 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
-          let grouped = H.ul ! HA.class_ "testsuite" $ do
-              htmlRenderer soFar
+          let grouped = H.ul ! HA.class_ "group" $ do
               H.toMarkup groupName
+              htmlRenderer soFar
 
           pure $ Const
-            soFar { htmlRenderer = grouped
-                  }
+            soFar { htmlRenderer = grouped }
 
       in do
         (Const summary, tests) <-
@@ -127,9 +126,12 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             H.docTypeHtml $ do
               H.head $ H.title "Test Results"
               H.body $ do
-                H.p ! HA.class_ "summaryFailures" $ H.toHtml . show . getSum
-                                                  $ summaryFailures summary
-                H.p ! HA.class_  "tests" $ H.toHtml $ show tests
+                H.ul ! HA.id "summary" $ do
+                    H.li ! HA.class_ "failure" $ H.toHtml . getSum
+                                               $ summaryFailures summary
+                    H.li ! HA.class_ "success" $ H.toHtml . getSum
+                                               $ summarySuccesses summary
+                    H.li ! HA.id  "total" $ H.toHtml tests
                 H.toHtml $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
