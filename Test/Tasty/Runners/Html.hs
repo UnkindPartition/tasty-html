@@ -41,7 +41,6 @@ instance Tasty.IsOption (Maybe HtmlPath) where
 
 --------------------------------------------------------------------------------
 data Summary = Summary { summaryFailures :: Sum Int
-                       , summaryErrors :: Sum Int
                        , summarySuccesses :: Sum Int
                        , htmlRenderer :: H.Markup
                        } deriving (Generic)
@@ -124,10 +123,8 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             H.docTypeHtml $ do
               H.head $ H.title "Test Results"
               H.body $ do
-                H.p "summaryErrors"
-                H.p ! HA.class_ "summaryErrors" $ H.toHtml . show . getSum $ summaryErrors summary
                 H.p ! HA.class_ "summaryFailures" $ H.toHtml . show . getSum $ summaryFailures summary
                 H.p ! HA.class_  "tests" $ H.toHtml $ show tests
                 H.toHtml $ htmlRenderer summary
 
-        return (getSum ((summaryFailures `mappend` summaryErrors) summary) == 0)
+        return $ getSum (summaryFailures summary) == 0
