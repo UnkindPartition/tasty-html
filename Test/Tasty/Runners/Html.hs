@@ -82,22 +82,14 @@ htmlRunner = Tasty.TestReporter optionDescription runner
               fromMaybe (error "Attempted to lookup test by index outside bounds") $
               IntMap.lookup i statusMap
 
-            let testCaseContent = H.toMarkup testName
+            let mkSummary contents = mempty { htmlRenderer = item contents }
 
-                mkSummary contents =
-                  mempty { htmlRenderer = H.li ! HA.class_ "parent_li"
-                                               ! H.customAttribute "role" "treeitem"
-                                        $ H.span ! HA.class_ "badge badge-success"
-                                        $ contents
-                         }
-
-                mkSuccess = (mkSummary testCaseContent)
+                mkSuccess = (mkSummary $ H.span ! HA.class_ "badge badge-success"
+                                       $ H.toMarkup testName)
                             { summarySuccesses = Sum 1 }
 
                 mkFailure reason =
-                  mkSummary ( H.li ! HA.class_ "parent_li"
-                                   ! H.customAttribute "role" "treeitem"
-                            $ H.span ! HA.class_ "badge badge-important"
+                  mkSummary ( H.span ! HA.class_ "badge badge-important"
                             $ H.toMarkup reason
                             )
 
@@ -116,11 +108,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
-          let grouped = H.ul ! H.customAttribute "role" "tree"
-                             $ H.li ! HA.class_ "parent_li"
-                                    ! H.customAttribute "role" "treeitem"
-                             $ do H.span $ H.toMarkup groupName
-                                  htmlRenderer soFar
+          let grouped = item
+                      $ do H.span $ H.toMarkup groupName
+                           tree $ htmlRenderer soFar
 
           pure $ Const
             soFar { htmlRenderer = grouped }
@@ -152,8 +142,13 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                                                $ summarySuccesses summary
                     H.li ! HA.id  "total" $ H.toHtml tests
                 H.div ! HA.class_ "tree well" $
-                    H.toHtml $ htmlRenderer summary
+                    H.toHtml $ tree $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 
   includeMarkup = getDataFileName >=> B.readFile >=> return . H.unsafeByteString
+
+  item = H.li ! HA.class_ "parent_li"
+              ! H.customAttribute "role" "treeitem"
+
+  tree  = H.ul ! H.customAttribute "role" "tree"
