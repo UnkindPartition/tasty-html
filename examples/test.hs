@@ -17,7 +17,7 @@ tests = testGroup "Tests" [properties, unitTests]
 properties :: TestTree
 properties = testGroup "Properties" [scProps, qcProps]
 
-scProps = testGroup "(checked by SmallCheck)"
+scProps = testGroup "SmallCheck"
   [ SC.testProperty "sort == sort . reverse" $
       \list -> sort (list :: [Int]) == sort (reverse list)
   , SC.testProperty "Fermat's little theorem" $
@@ -28,7 +28,7 @@ scProps = testGroup "(checked by SmallCheck)"
         (n :: Integer) >= 3 SC.==> x^n + y^n /= (z^n :: Integer)
   ]
 
-qcProps = testGroup "(checked by QuickCheck)"
+qcProps = testGroup "QuickCheck"
   [ QC.testProperty "sort == sort . reverse" $
       \list -> sort (list :: [Int]) == sort (reverse list)
   , QC.testProperty "Fermat's little theorem" $
