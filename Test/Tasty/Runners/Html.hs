@@ -126,6 +126,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             testTree
 
         css <- includeMarkup "/data/bootstrap-combined.min.css"
+        style <- includeMarkup "/data/style.css"
         js  <- includeMarkup "/data/jquery-2.1.0.min.js"
 
         writeFile path $
@@ -133,16 +134,27 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             H.docTypeHtml $ do
               H.head $ do H.title "Test Results"
                           H.style css
+                          H.style style
                           H.script js
               H.body $ do
-                H.ul ! HA.id "summary" $ do
-                    H.li ! HA.class_ "failure" $ H.toHtml . getSum
-                                               $ summaryFailures summary
-                    H.li ! HA.class_ "success" $ H.toHtml . getSum
-                                               $ summarySuccesses summary
-                    H.li ! HA.id  "total" $ H.toHtml tests
-                H.div ! HA.class_ "tree well" $
-                    H.toHtml $ tree $ htmlRenderer summary
+                H.div ! HA.class_ "row" $ do
+                    H.div ! HA.class_ "status_area span12" $ do
+                            H.h4 ! HA.class_ "header" $ "Status"
+                            H.table ! HA.id "summary" $ do
+                                H.tr $ do
+                                    H.td ! HA.class_ "status" $ H.span "Successes"
+                                    H.td ! HA.class_ "number" $ H.toHtml . getSum $ summarySuccesses summary
+                                H.tr $ do
+                                    H.td ! HA.class_ "status" $ H.span "Failures"
+                                    H.td ! HA.class_ "number" $ H.toHtml . getSum $ summaryFailures summary
+                                H.tr $ do
+                                    H.td ! HA.class_ "status" $ H.span "Total"
+                                    H.td ! HA.id  "total" $ H.toHtml tests
+                H.div ! HA.class_ "row" $ do
+                    H.div ! HA.class_ "results_area span12" $ do
+                        H.h4 ! HA.class_ "header" $ "Results"
+                        H.div ! HA.class_ "tree well span12" $
+                            H.toHtml $ tree $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 

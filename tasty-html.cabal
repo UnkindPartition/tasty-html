@@ -15,6 +15,7 @@ cabal-version:       >=1.10
 data-files:
   data/bootstrap-combined.min.css
   data/jquery-2.1.0.min.js
+  data/style.css
 
 library
   exposed-modules: Test.Tasty.Runners.Html

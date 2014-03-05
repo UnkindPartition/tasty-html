@@ -1,0 +1,10 @@
+.status {
+    color: gray;
+}
+
+table#summary tr td {
+  padding: 5px;
+}
+body {
+    padding-left: 15px;
+}
