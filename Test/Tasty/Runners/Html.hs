@@ -133,7 +133,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                           H.style style
                           H.script js
               H.body $ do
-                H.div ! HA.class_ "row" $ do
+                H.div ! HA.class_ "row" $
                     H.div ! HA.class_ "status_area span12" $ do
                             H.h4 ! HA.class_ "header" $ "Status"
                             H.table ! HA.id "summary" $ do
@@ -146,7 +146,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                                 H.tr $ do
                                     H.td ! HA.class_ "status" $ H.span "Total"
                                     H.td ! HA.id  "total" $ H.toHtml tests
-                H.div ! HA.class_ "row" $ do
+                H.div ! HA.class_ "row" $
                     H.div ! HA.class_ "results_area span12" $ do
                         H.h4 ! HA.class_ "header" $ "Results"
                         H.div ! HA.class_ "tree well span12" $
