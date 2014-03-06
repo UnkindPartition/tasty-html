@@ -85,21 +85,17 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             let mkSummary contents = mempty { htmlRenderer = item contents }
 
                 mkSuccess = (mkSummary $ H.span ! HA.class_ "badge badge-success"
-                                       $ H.toMarkup testName)
-                            { summarySuccesses = Sum 1 }
+                                       $ H.toMarkup testName) { summarySuccesses = Sum 1 }
 
-                mkFailure reason =
-                  mkSummary ( H.span ! HA.class_ "badge badge-important"
-                            $ H.toMarkup reason
-                            )
+                mkFailure reason = (mkSummary $ do
+                    H.span ! HA.class_ "badge badge-important" $ H.toMarkup testName
+                    H.pre $ H.toMarkup reason) { summaryFailures = Sum 1 }
 
             case status of
               -- If the test is done, generate HTML for it
               Tasty.Done result
                 | Tasty.resultSuccessful result -> pure mkSuccess
-                | otherwise -> pure $
-                    (mkFailure $ Tasty.resultDescription result)
-                      { summaryFailures = Sum 1 }
+                | otherwise -> pure $ mkFailure $ Tasty.resultDescription result
               -- Otherwise the test has either not been started or is currently
               -- executing
               _ -> STM.retry
