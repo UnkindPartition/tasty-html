@@ -8,3 +8,7 @@ table#summary tr td {
 body {
     padding-left: 15px;
 }
+
+.tree {
+    max-height: 1000px;
+}
