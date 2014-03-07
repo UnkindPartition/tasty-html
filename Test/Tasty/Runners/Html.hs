@@ -89,14 +89,14 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 mkSuccess desc = (mkSummary $ do
                   H.span ! HA.class_ "badge badge-success" $ do
                     H.i ! HA.class_ "icon-ok-circle" $ ""
-                    H.toMarkup testName
+                    H.toMarkup $ "  " ++ testName
                   H.br
                   H.small $ H.toMarkup desc) { summarySuccesses = Sum 1 }
 
                 mkFailure reason = (mkSummary $ do
                   H.span ! HA.class_ "badge badge-important" $ do
                     H.i ! HA.class_ "icon-ban-circle" $ ""
-                    H.toMarkup testName
+                    H.toMarkup $ "  " ++ testName
                   H.br
                   H.small $ splitBr reason) { summaryFailures = Sum 1 }
 
@@ -116,7 +116,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
           Const soFar <- Functor.getCompose $ getTraversal children
           let grouped = item
                       $ do H.span $ do H.i ! HA.class_ "icon-minus-sign" $ ""
-                                       H.toMarkup groupName
+                                       H.toMarkup $ "  " ++ groupName
                            tree $ htmlRenderer soFar
 
           pure $ Const
