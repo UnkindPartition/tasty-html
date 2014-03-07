@@ -12,7 +12,7 @@ import Data.List (intersperse)
 import Control.Monad ((>=>))
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Monoid(..), Sum(..))
+import Data.Monoid (Monoid(..), Sum(..), (<>))
 import Data.Proxy (Proxy(..))
 import Data.Semigroup.Applicative (Traversal(..))
 import Data.Tagged (Tagged(..))
@@ -111,7 +111,8 @@ htmlRunner = Tasty.TestReporter optionDescription runner
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
           let grouped = item
-                      $ do H.span $ H.toMarkup groupName
+                      $ do H.span $ do H.i ! HA.class_ "icon-minus-sign" $ ""
+                                       H.toMarkup groupName
                            tree $ htmlRenderer soFar
 
           pure $ Const
@@ -127,17 +128,20 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             options
             testTree
 
-        css <- includeMarkup "/data/bootstrap-combined.min.css"
-        style <- includeMarkup "/data/style.css"
-        js  <- includeMarkup "/data/jquery-2.1.0.min.js"
+        css            <- includeMarkup "data/bootstrap-combined.min.css"
+        style          <- includeMarkup "data/style.css"
+        jquery         <- includeScript "data/jquery-2.1.0.min.js"
+        bootstrap_tree <- includeScript "data/bootstrap-tree.js"
 
         writeFile path $
           renderHtml $
             H.docTypeHtml $ do
-              H.head $ do H.title "Test Results"
+              H.head $ do H.meta ! HA.charset "utf-8"
+                          H.title "Test Results"
                           H.style css
                           H.style style
-                          H.script js
+                          jquery
+                          bootstrap_tree
               H.body $ do
                 H.div ! HA.class_ "row" $
                   H.div ! HA.class_ "status_area span12" $ do
@@ -163,6 +167,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
         return $ getSum (summaryFailures summary) == 0
 
   includeMarkup = getDataFileName >=> B.readFile >=> return . H.unsafeByteString
+
+  includeScript = getDataFileName >=> B.readFile >=> \bs ->
+                  return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
   item = H.li ! HA.class_ "parent_li"
               ! H.customAttribute "role" "treeitem"
