@@ -4,11 +4,11 @@ $(document).ready(function() {
         var children = $(this).parent('li.parent_li').find(' > ul > li');
         if (children.is(':visible')) {
                 children.hide('fast');
-                $(this).attr('title', 'Expand this test group').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+                $(this).attr('title', 'Expand this test group').find(' > i').addClass('icon-folder-close').removeClass('icon-folder-open');
         }
         else {
                 children.show('fast');
-                $(this).attr('title', 'Collapse this test group').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
+                $(this).attr('title', 'Collapse this test group').find(' > i').addClass('icon-folder-open').removeClass('icon-folder-close');
         }
         e.stopPropagation();
     });
