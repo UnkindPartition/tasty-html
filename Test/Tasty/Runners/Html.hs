@@ -134,23 +134,25 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                           H.script js
               H.body $ do
                 H.div ! HA.class_ "row" $
-                    H.div ! HA.class_ "status_area span12" $ do
-                            H.h4 ! HA.class_ "header" $ "Status"
-                            H.table ! HA.id "summary" $ do
-                                H.tr $ do
-                                    H.td ! HA.class_ "status" $ H.span "Successes"
-                                    H.td ! HA.class_ "number" $ H.toHtml . getSum $ summarySuccesses summary
-                                H.tr $ do
-                                    H.td ! HA.class_ "status" $ H.span "Failures"
-                                    H.td ! HA.class_ "number" $ H.toHtml . getSum $ summaryFailures summary
-                                H.tr $ do
-                                    H.td ! HA.class_ "status" $ H.span "Total"
-                                    H.td ! HA.id  "total" $ H.toHtml tests
+                  H.div ! HA.class_ "status_area span12" $ do
+                    H.h4 ! HA.class_ "header" $ "Status"
+                    H.table ! HA.id "summary" $
+                      H.tr $ do
+                        H.td ! HA.class_ "status" $ H.span "Successes"
+                        H.td ! HA.class_ "number" $ H.toMarkup . getSum
+                                                  $ summarySuccesses summary
+                        H.tr $ do
+                          H.td ! HA.class_ "status" $ H.span "Failures"
+                          H.td ! HA.class_ "number" $ H.toMarkup . getSum
+                                                    $ summaryFailures summary
+                          H.tr $ do
+                            H.td ! HA.class_ "status" $ H.span "Total"
+                            H.td ! HA.id  "total" $ H.toMarkup tests
                 H.div ! HA.class_ "row" $
-                    H.div ! HA.class_ "results_area span12" $ do
-                        H.h4 ! HA.class_ "header" $ "Results"
-                        H.div ! HA.class_ "tree well span12" $
-                            H.toHtml $ tree $ htmlRenderer summary
+                  H.div ! HA.class_ "results_area span12" $ do
+                      H.h4 ! HA.class_ "header" $ "Results"
+                      H.div ! HA.class_ "tree well span12" $
+                        H.toMarkup $ tree $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 
