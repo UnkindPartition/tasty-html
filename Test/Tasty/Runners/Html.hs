@@ -86,8 +86,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             let splitBr = H.toMarkup . intersperse H.br . map H.toMarkup . lines
                 mkSummary contents = mempty { htmlRenderer = item contents }
 
-                mkSuccess = (mkSummary $ H.span ! HA.class_ "badge badge-success"
-                                       $ H.toMarkup testName) { summarySuccesses = Sum 1 }
+                mkSuccess desc = (mkSummary $ do
+                    H.span ! HA.class_ "badge badge-success" $ H.toMarkup testName
+                    H.toMarkup $ " " ++ desc) { summarySuccesses = Sum 1 }
 
                 mkFailure reason = (mkSummary $ do
                     H.span ! HA.class_ "badge badge-important" $ H.toMarkup testName
@@ -97,7 +98,8 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             case status of
               -- If the test is done, generate HTML for it
               Tasty.Done result
-                | Tasty.resultSuccessful result -> pure mkSuccess
+                | Tasty.resultSuccessful result -> pure $
+                    mkSuccess $ Tasty.resultDescription result
                 | otherwise -> pure $ mkFailure $ Tasty.resultDescription result
               -- Otherwise the test has either not been started or is currently
               -- executing
