@@ -8,6 +8,7 @@
 module Test.Tasty.Runners.Html (htmlRunner) where
 
 import Control.Applicative
+import Data.List (intersperse)
 import Control.Monad ((>=>))
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
@@ -82,14 +83,16 @@ htmlRunner = Tasty.TestReporter optionDescription runner
               fromMaybe (error "Attempted to lookup test by index outside bounds") $
               IntMap.lookup i statusMap
 
-            let mkSummary contents = mempty { htmlRenderer = item contents }
+            let splitBr = H.toMarkup . intersperse H.br . map H.toMarkup . lines
+                mkSummary contents = mempty { htmlRenderer = item contents }
 
                 mkSuccess = (mkSummary $ H.span ! HA.class_ "badge badge-success"
                                        $ H.toMarkup testName) { summarySuccesses = Sum 1 }
 
                 mkFailure reason = (mkSummary $ do
                     H.span ! HA.class_ "badge badge-important" $ H.toMarkup testName
-                    H.pre $ H.toMarkup reason) { summaryFailures = Sum 1 }
+                    H.br
+                    splitBr reason) { summaryFailures = Sum 1 }
 
             case status of
               -- If the test is done, generate HTML for it
