@@ -114,10 +114,11 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
-          let grouped = item
-                      $ do H.span $ do H.i ! HA.class_ "icon-minus-sign" $ ""
-                                       H.toMarkup $ "  " ++ groupName
-                           tree $ htmlRenderer soFar
+          let grouped = item $ do
+                H.span ! HA.class_ "badge badge-info" $ do
+                  H.i ! HA.class_ "icon-minus-sign" $ ""
+                  H.toMarkup $ "  " ++ groupName
+                tree $ htmlRenderer soFar
 
           pure $ Const
             soFar { htmlRenderer = grouped }
