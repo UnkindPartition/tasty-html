@@ -88,7 +88,8 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
                 mkSuccess desc = (mkSummary $ do
                     H.span ! HA.class_ "badge badge-success" $ H.toMarkup testName
-                    H.small $ H.toMarkup $ " " ++ desc) { summarySuccesses = Sum 1 }
+                    H.br
+                    H.small $ H.toMarkup desc) { summarySuccesses = Sum 1 }
 
                 mkFailure reason = (mkSummary $ do
                     H.span ! HA.class_ "badge badge-important" $ H.toMarkup testName
