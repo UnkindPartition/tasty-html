@@ -87,14 +87,18 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 mkSummary contents = mempty { htmlRenderer = item contents }
 
                 mkSuccess desc = (mkSummary $ do
-                    H.span ! HA.class_ "badge badge-success" $ H.toMarkup testName
-                    H.br
-                    H.small $ H.toMarkup desc) { summarySuccesses = Sum 1 }
+                  H.span ! HA.class_ "badge badge-success" $ do
+                    H.i ! HA.class_ "icon-ok-circle" $ ""
+                    H.toMarkup testName
+                  H.br
+                  H.small $ H.toMarkup desc) { summarySuccesses = Sum 1 }
 
                 mkFailure reason = (mkSummary $ do
-                    H.span ! HA.class_ "badge badge-important" $ H.toMarkup testName
-                    H.br
-                    H.small $ splitBr reason) { summaryFailures = Sum 1 }
+                  H.span ! HA.class_ "badge badge-important" $ do
+                    H.i ! HA.class_ "icon-ban-circle" $ ""
+                    H.toMarkup testName
+                  H.br
+                  H.small $ splitBr reason) { summaryFailures = Sum 1 }
 
             case status of
               -- If the test is done, generate HTML for it
