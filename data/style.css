@@ -7,3 +7,7 @@ pre {
     background-color: inherit;
     border: none;
 }
+
+h5,h6 {
+    display: inline;
+}

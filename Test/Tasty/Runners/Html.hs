@@ -88,7 +88,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                   ( mkSummary $ do
                       H.span ! HA.class_ "badge badge-success" $
                         H.i ! HA.class_ "icon-ok-sign" $ ""
-                      H.em ! HA.class_ "text-success" $ H.toMarkup $
+                      H.h6 ! HA.class_ "text-success" $ H.toMarkup $
                         "  " ++ testName
                       unless (null desc) $ do
                         H.br
@@ -100,7 +100,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                   ( mkSummary $ do
                       H.span ! HA.class_ "badge badge-important" $
                         H.i ! HA.class_ "icon-remove-sign" $ ""
-                      H.em ! HA.class_ "text-error" $ H.toMarkup $
+                      H.h6 ! HA.class_ "text-error" $ H.toMarkup $
                         "  " ++ testName
                       unless (null reason) $ do
                         H.br
@@ -128,12 +128,12 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                   then
                     do H.span ! HA.class_ "badge badge-important " $
                          H.i ! HA.class_ "icon-folder-open" $ ""
-                       H.strong ! HA.class_ "text-error" $
+                       H.h5 ! HA.class_ "text-error" $
                          H.toMarkup $ "  " ++ groupName
                   else
                     do H.span ! HA.class_ "badge badge-success" $
                          H.i ! HA.class_ "icon-folder-open" $ ""
-                       H.strong ! HA.class_ "text-success" $
+                       H.h5 ! HA.class_ "text-success" $
                          H.toMarkup $ "  " ++ groupName
                 tree $ htmlRenderer soFar
 
@@ -165,6 +165,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                           jquery
                           bootstrap_tree
               H.body $ H.div ! HA.class_ "container" $ do
+                H.h1 ! HA.class_ "text-center" $ "Tasty"
                 H.div ! HA.class_ "row" $
                   if summaryFailures summary > Sum 0
                     then
