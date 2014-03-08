@@ -8,7 +8,7 @@
 module Test.Tasty.Runners.Html (htmlRunner) where
 
 import Control.Applicative
-import Control.Monad ((>=>))
+import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(..), Sum(..), (<>))
@@ -89,8 +89,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                       H.span ! HA.class_ "badge badge-success" $ do
                         H.i ! HA.class_ "icon-ok-sign" $ ""
                         H.toMarkup $ "  " ++ testName
-                      H.br
-                      H.pre $ H.small $ H.toMarkup desc
+                      unless (null desc) $ do
+                        H.br
+                        H.pre $ H.small $ H.toMarkup desc
                   )
                   { summarySuccesses = Sum 1 }
 
@@ -99,8 +100,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                       H.span ! HA.class_ "badge badge-important" $ do
                         H.i ! HA.class_ "icon-remove-sign" $ ""
                         H.toMarkup $ "  " ++ testName
-                      H.br
-                      H.pre $ H.small $ H.toMarkup reason
+                      unless (null reason) $ do
+                        H.br
+                        H.pre $ H.small $ H.toMarkup reason
                   )
                   { summaryFailures = Sum 1 }
 
