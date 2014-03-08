@@ -8,7 +8,6 @@
 module Test.Tasty.Runners.Html (htmlRunner) where
 
 import Control.Applicative
-import Data.List (intersperse)
 import Control.Monad ((>=>))
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
@@ -83,22 +82,27 @@ htmlRunner = Tasty.TestReporter optionDescription runner
               fromMaybe (error "Attempted to lookup test by index outside bounds") $
               IntMap.lookup i statusMap
 
-            let splitBr = H.toMarkup . intersperse H.br . map H.toMarkup . lines
-                mkSummary contents = mempty { htmlRenderer = item contents }
+            let mkSummary contents = mempty { htmlRenderer = item contents }
 
-                mkSuccess desc = (mkSummary $ do
-                  H.span ! HA.class_ "badge badge-success" $ do
-                    H.i ! HA.class_ "icon-ok-sign" $ ""
-                    H.toMarkup $ "  " ++ testName
-                  H.br
-                  H.small $ H.toMarkup desc) { summarySuccesses = Sum 1 }
+                mkSuccess desc =
+                  ( mkSummary $ do
+                      H.span ! HA.class_ "badge badge-success" $ do
+                        H.i ! HA.class_ "icon-ok-sign" $ ""
+                        H.toMarkup $ "  " ++ testName
+                      H.br
+                      H.pre $ H.code $ H.toMarkup desc
+                  )
+                  { summarySuccesses = Sum 1 }
 
-                mkFailure reason = (mkSummary $ do
-                  H.span ! HA.class_ "badge badge-important" $ do
-                    H.i ! HA.class_ "icon-remove-sign" $ ""
-                    H.toMarkup $ "  " ++ testName
-                  H.br
-                  H.small $ splitBr reason) { summaryFailures = Sum 1 }
+                mkFailure reason =
+                  ( mkSummary $ do
+                      H.span ! HA.class_ "badge badge-important" $ do
+                        H.i ! HA.class_ "icon-remove-sign" $ ""
+                        H.toMarkup $ "  " ++ testName
+                      H.br
+                      H.pre $ H.code $ H.toMarkup reason
+                  )
+                  { summaryFailures = Sum 1 }
 
             case status of
               -- If the test is done, generate HTML for it

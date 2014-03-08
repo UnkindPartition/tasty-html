@@ -12,3 +12,7 @@ body {
 .tree {
     max-height: none;
 }
+
+pre {
+    display: inline-flex;
+}
