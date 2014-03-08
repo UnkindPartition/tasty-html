@@ -20,6 +20,7 @@ data-files:
 
 library
   exposed-modules: Test.Tasty.Runners.Html
+  other-modules: Paths_tasty_html
   build-depends:
     base >= 4.5 && < 5,
     bytestring >= 0.10,
