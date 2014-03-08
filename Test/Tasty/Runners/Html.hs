@@ -90,7 +90,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                         H.i ! HA.class_ "icon-ok-sign" $ ""
                         H.toMarkup $ "  " ++ testName
                       H.br
-                      H.pre $ H.code $ H.toMarkup desc
+                      H.pre $ H.small $ H.toMarkup desc
                   )
                   { summarySuccesses = Sum 1 }
 
@@ -100,7 +100,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                         H.i ! HA.class_ "icon-remove-sign" $ ""
                         H.toMarkup $ "  " ++ testName
                       H.br
-                      H.pre $ H.code $ H.toMarkup reason
+                      H.pre $ H.small $ H.toMarkup reason
                   )
                   { summaryFailures = Sum 1 }
 
