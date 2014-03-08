@@ -121,7 +121,9 @@ htmlRunner = Tasty.TestReporter optionDescription runner
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
           let grouped = item $ do
-                H.span ! HA.class_ "badge badge-info" $ do
+                H.span ! HA.class_ (if summaryFailures soFar > Sum 0
+                                       then "badge badge-important"
+                                       else "badge badge-success") $ do
                   H.i ! HA.class_ "icon-folder-open" $ ""
                   H.toMarkup $ "  " ++ groupName
                 tree $ htmlRenderer soFar
