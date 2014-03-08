@@ -88,10 +88,10 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                   ( mkSummary $ do
                       H.span ! HA.class_ "badge badge-success" $ do
                         H.i ! HA.class_ "icon-ok-sign" $ ""
-                        H.toMarkup $ "  " ++ testName
+                      H.toMarkup $ "  " ++ testName
                       unless (null desc) $ do
                         H.br
-                        H.pre $ H.small $ H.toMarkup desc
+                        H.pre $ H.small ! HA.class_ "desc" $ H.toMarkup desc
                   )
                   { summarySuccesses = Sum 1 }
 
@@ -99,10 +99,10 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                   ( mkSummary $ do
                       H.span ! HA.class_ "badge badge-important" $ do
                         H.i ! HA.class_ "icon-remove-sign" $ ""
-                        H.toMarkup $ "  " ++ testName
+                      H.toMarkup $ "  " ++ testName
                       unless (null reason) $ do
                         H.br
-                        H.pre $ H.small $ H.toMarkup reason
+                        H.pre $ H.small ! HA.class_ "failure" $ H.toMarkup reason
                   )
                   { summaryFailures = Sum 1 }
 
@@ -125,7 +125,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                                        then "badge badge-important"
                                        else "badge badge-success") $ do
                   H.i ! HA.class_ "icon-folder-open" $ ""
-                  H.toMarkup $ "  " ++ groupName
+                H.toMarkup $ "  " ++ groupName
                 tree $ htmlRenderer soFar
 
           pure $ Const

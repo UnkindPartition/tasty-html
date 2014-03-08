@@ -18,3 +18,11 @@ pre {
     background-color: inherit;
     border: none;
 }
+
+.failure {
+    color: rgb(185, 74, 72);
+}
+
+.desc {
+    color: gray;
+}
