@@ -86,23 +86,26 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
                 mkSuccess desc =
                   ( mkSummary $ do
-                      H.span ! HA.class_ "badge badge-success" $ do
+                      H.span ! HA.class_ "badge badge-success" $
                         H.i ! HA.class_ "icon-ok-sign" $ ""
-                      H.toMarkup $ "  " ++ testName
+                      H.em ! HA.class_ "text-success" $ H.toMarkup $
+                        "  " ++ testName
                       unless (null desc) $ do
                         H.br
-                        H.pre $ H.small ! HA.class_ "desc" $ H.toMarkup desc
+                        H.pre $ H.small ! HA.class_ "muted" $ H.toMarkup desc
                   )
                   { summarySuccesses = Sum 1 }
 
                 mkFailure reason =
                   ( mkSummary $ do
-                      H.span ! HA.class_ "badge badge-important" $ do
+                      H.span ! HA.class_ "badge badge-important" $
                         H.i ! HA.class_ "icon-remove-sign" $ ""
-                      H.toMarkup $ "  " ++ testName
+                      H.em ! HA.class_ "text-error" $ H.toMarkup $
+                        "  " ++ testName
                       unless (null reason) $ do
                         H.br
-                        H.pre $ H.small ! HA.class_ "failure" $ H.toMarkup reason
+                        H.pre $ H.small ! HA.class_ "text-error"
+                          $ H.toMarkup reason
                   )
                   { summaryFailures = Sum 1 }
 
@@ -121,11 +124,17 @@ htmlRunner = Tasty.TestReporter optionDescription runner
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
           let grouped = item $ do
-                H.span ! HA.class_ (if summaryFailures soFar > Sum 0
-                                       then "badge badge-important"
-                                       else "badge badge-success") $ do
-                  H.i ! HA.class_ "icon-folder-open" $ ""
-                H.toMarkup $ "  " ++ groupName
+                if summaryFailures soFar > Sum 0
+                  then
+                    do H.span ! HA.class_ "badge badge-important " $
+                         H.i ! HA.class_ "icon-folder-open" $ ""
+                       H.strong ! HA.class_ "text-error" $
+                         H.toMarkup $ "  " ++ groupName
+                  else
+                    do H.span ! HA.class_ "badge badge-success" $
+                         H.i ! HA.class_ "icon-folder-open" $ ""
+                       H.strong ! HA.class_ "text-success" $
+                         H.toMarkup $ "  " ++ groupName
                 tree $ htmlRenderer soFar
 
           pure $ Const
@@ -155,27 +164,26 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                           H.style style
                           jquery
                           bootstrap_tree
-              H.body $ do
+              H.body $ H.div ! HA.class_ "container" $ do
                 H.div ! HA.class_ "row" $
-                  H.div ! HA.class_ "status_area span12" $ do
-                    H.h4 ! HA.class_ "header" $ "Status"
-                    H.table ! HA.id "summary" $
-                      H.tr $ do
-                        H.td ! HA.class_ "status" $ H.span "Successes"
-                        H.td ! HA.class_ "number" $ H.toMarkup . getSum
-                                                  $ summarySuccesses summary
-                        H.tr $ do
-                          H.td ! HA.class_ "status" $ H.span "Failures"
-                          H.td ! HA.class_ "number" $ H.toMarkup . getSum
-                                                    $ summaryFailures summary
-                          H.tr $ do
-                            H.td ! HA.class_ "status" $ H.span "Total"
-                            H.td ! HA.id  "total" $ H.toMarkup tests
+                  if summaryFailures summary > Sum 0
+                    then
+                      H.div ! HA.class_ "alert alert-block alert-error" $
+                        H.p ! HA.class_ "lead text-center" $ do
+                          H.toMarkup . getSum $ summaryFailures summary
+                          " out of "
+                          H.toMarkup tests
+                          " tests failed"
+                    else
+                      H.div ! HA.class_ "alert alert-block alert-success" $
+                        H.p ! HA.class_ "lead text-center" $ do
+                          "All "
+                          H.toMarkup tests
+                          " tests passed"
+
                 H.div ! HA.class_ "row" $
-                  H.div ! HA.class_ "results_area span12" $ do
-                      H.h4 ! HA.class_ "header" $ "Results"
-                      H.div ! HA.class_ "tree well span12" $
-                        H.toMarkup $ tree $ htmlRenderer summary
+                  H.div ! HA.class_ "tree well" $
+                    H.toMarkup $ tree $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 
