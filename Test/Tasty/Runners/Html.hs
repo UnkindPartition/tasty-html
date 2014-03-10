@@ -61,7 +61,7 @@ instance Monoid Summary where
   To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
   passing 'htmlRunner' as one possible ingredient. This ingredient will run
   tests if you pass the @--html@ command line option. For example,
-  @--html=results.html@ will run all the tests and generate @results.htmll@ as output.
+  @--html=results.html@ will run all the tests and generate @results.html@ as output.
 
 -}
 htmlRunner :: Tasty.Ingredient
