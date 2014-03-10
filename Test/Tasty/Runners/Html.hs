@@ -150,10 +150,10 @@ htmlRunner = Tasty.TestReporter optionDescription runner
             options
             testTree
 
-        css            <- includeMarkup "data/bootstrap-combined.min.css"
-        style          <- includeMarkup "data/style.css"
-        jquery         <- includeScript "data/jquery-2.1.0.min.js"
-        bootstrap_tree <- includeScript "data/bootstrap-tree.js"
+        css           <- includeMarkup "data/bootstrap-combined.min.css"
+        style         <- includeMarkup "data/style.css"
+        jquery        <- includeScript "data/jquery-2.1.0.min.js"
+        bootstrapTree <- includeScript "data/bootstrap-tree.js"
 
         writeFile path $
           renderHtml $
@@ -166,7 +166,7 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                 H.style css
                 H.style style
                 jquery
-                bootstrap_tree
+                bootstrapTree
               H.body $ H.div ! HA.class_ "container" $ do
                 H.h1 ! HA.class_ "text-center" $ "Tasty Test Results"
                 H.div ! HA.class_ "row" $
