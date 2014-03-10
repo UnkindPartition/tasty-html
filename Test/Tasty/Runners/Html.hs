@@ -175,13 +175,13 @@ htmlRunner = Tasty.TestReporter optionDescription runner
                       H.div ! HA.class_ "alert alert-block alert-error" $
                         H.p ! HA.class_ "lead text-center" $ do
                           H.toMarkup . getSum $ summaryFailures summary
-                          " out of "
+                          " out of " :: H.Markup
                           H.toMarkup tests
                           " tests failed"
                     else
                       H.div ! HA.class_ "alert alert-block alert-success" $
                         H.p ! HA.class_ "lead text-center" $ do
-                          "All "
+                          "All " :: H.Markup
                           H.toMarkup tests
                           " tests passed"
 
