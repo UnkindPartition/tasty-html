@@ -157,15 +157,18 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         writeFile path $
           renderHtml $
-            H.docTypeHtml $ do
-              H.head $ do H.meta ! HA.charset "utf-8"
-                          H.title "Test Results"
-                          H.style css
-                          H.style style
-                          jquery
-                          bootstrap_tree
+            H.docTypeHtml ! HA.lang "en" $ do
+              H.head $ do
+                H.meta ! HA.charset "utf-8"
+                H.title "Tasty Test Results"
+                H.meta ! HA.name "viewport"
+                       ! HA.content "width=device-width, initial-scale=1.0"
+                H.style css
+                H.style style
+                jquery
+                bootstrap_tree
               H.body $ H.div ! HA.class_ "container" $ do
-                H.h1 ! HA.class_ "text-center" $ "Tasty"
+                H.h1 ! HA.class_ "text-center" $ "Tasty Test Results"
                 H.div ! HA.class_ "row" $
                   if summaryFailures summary > Sum 0
                     then
