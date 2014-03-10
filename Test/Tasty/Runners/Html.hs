@@ -8,6 +8,7 @@
 module Test.Tasty.Runners.Html (htmlRunner) where
 
 import Control.Applicative
+import Data.Foldable (forM_)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (fromMaybe)
@@ -82,32 +83,25 @@ htmlRunner = Tasty.TestReporter optionDescription runner
               fromMaybe (error "Attempted to lookup test by index outside bounds") $
               IntMap.lookup i statusMap
 
-            let mkSummary contents = mempty { htmlRenderer = item contents }
+            let leave = branch testName False
+
+                mkSummary contents = mempty { htmlRenderer = item contents }
 
                 mkSuccess desc =
-                  ( mkSummary $ do
-                      H.span ! HA.class_ "badge badge-success" $
-                        H.i ! HA.class_ "icon-ok-sign" $ ""
-                      H.h6 ! HA.class_ "text-success" $ H.toMarkup $
-                        "  " ++ testName
-                      unless (null desc) $ do
-                        H.br
-                        H.pre $ H.small ! HA.class_ "muted" $ H.toMarkup desc
-                  )
-                  { summarySuccesses = Sum 1 }
+                  ( mkSummary $
+                      leave (Just (desc, "muted"))
+                            "icon-ok-sign"
+                            "badge badge-success"
+                            "text-success"
+                  ) { summarySuccesses = Sum 1 }
 
-                mkFailure reason =
-                  ( mkSummary $ do
-                      H.span ! HA.class_ "badge badge-important" $
-                        H.i ! HA.class_ "icon-remove-sign" $ ""
-                      H.h6 ! HA.class_ "text-error" $ H.toMarkup $
-                        "  " ++ testName
-                      unless (null reason) $ do
-                        H.br
-                        H.pre $ H.small ! HA.class_ "text-error"
-                          $ H.toMarkup reason
-                  )
-                  { summaryFailures = Sum 1 }
+                mkFailure desc =
+                  ( mkSummary $
+                      leave (Just (desc, "text-error"))
+                            "icon-remove-sign"
+                            "badge badge-important"
+                            "text-error"
+                  ) { summaryFailures = Sum 1 }
 
             case status of
               -- If the test is done, generate HTML for it
@@ -123,18 +117,11 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Functor.Compose $ do
           Const soFar <- Functor.getCompose $ getTraversal children
-          let grouped = item $ do
+          let groupBranch = branch groupName True Nothing "icon-folder-open"
+              grouped = item $ do
                 if summaryFailures soFar > Sum 0
-                  then
-                    do H.span ! HA.class_ "badge badge-important " $
-                         H.i ! HA.class_ "icon-folder-open" $ ""
-                       H.h5 ! HA.class_ "text-error" $
-                         H.toMarkup $ "  " ++ groupName
-                  else
-                    do H.span ! HA.class_ "badge badge-success" $
-                         H.i ! HA.class_ "icon-folder-open" $ ""
-                       H.h5 ! HA.class_ "text-success" $
-                         H.toMarkup $ "  " ++ groupName
+                  then groupBranch "badge badge-important" "text-error"
+                  else groupBranch "badge badge-success" "text-success"
                 tree $ htmlRenderer soFar
 
           pure $ Const
@@ -191,12 +178,31 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
         return $ getSum (summaryFailures summary) == 0
 
-  includeMarkup = getDataFileName >=> B.readFile >=> return . H.unsafeByteString
+  includeMarkup =
+    getDataFileName >=> B.readFile >=> return . H.unsafeByteString
 
-  includeScript = getDataFileName >=> B.readFile >=> \bs ->
-                  return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
+  includeScript =
+    getDataFileName >=> B.readFile >=> \bs ->
+    return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
   item = H.li ! HA.class_ "parent_li"
               ! H.customAttribute "role" "treeitem"
 
   tree  = H.ul ! H.customAttribute "role" "tree"
+
+branch :: String
+       -> Bool
+       -> Maybe (String, H.AttributeValue)
+       -> H.AttributeValue
+       -> H.AttributeValue
+       -> H.AttributeValue
+       -> H.Markup
+branch name isBig mdesc icon class_ text = do
+  H.span ! HA.class_ class_ $
+    H.i ! HA.class_ icon $ ""
+  (if isBig then H.h5 else H.h6) ! HA.class_ text $
+    H.toMarkup $ "  " ++ name
+  forM_ mdesc $ \(desc,desca) ->
+    unless (null desc) $ do
+      H.br
+      H.pre $ H.small ! HA.class_ desca $ H.toMarkup desc
