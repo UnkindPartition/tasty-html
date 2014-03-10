@@ -12,6 +12,10 @@ build-type:          Simple
 -- extra-source-files:  CHANGELOG
 cabal-version:       >=1.10
 
+source-repository head
+    type: git
+    location: git://github.com/feuerbach/tasty-html.git
+
 data-files:
   data/bootstrap-combined.min.css
   data/style.css
