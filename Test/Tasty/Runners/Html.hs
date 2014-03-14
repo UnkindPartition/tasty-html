@@ -16,6 +16,7 @@ import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
 import Data.Foldable (forM_)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
+import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
 import Control.Monad.State (get, modify, runStateT)
 import Data.Functor.Compose (Compose(Compose,getCompose))
@@ -69,7 +70,7 @@ import Text.Blaze.Html5.Attributes
   , content
   , class_
   )
-import Text.Blaze.Html.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.Text (renderHtml)
 
 import Paths_tasty_html (getDataFileName)
 
@@ -181,7 +182,7 @@ htmlRunner = TestReporter optionDescription runner
         jquery        <- includeScript "data/jquery-2.1.0.min.js"
         bootstrapTree <- includeScript "data/bootstrap-tree.js"
 
-        writeFile path $
+        TIO.writeFile path $
           renderHtml $
             docTypeHtml ! lang "en" $ do
               head $ do
