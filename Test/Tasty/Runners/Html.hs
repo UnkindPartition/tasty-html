@@ -22,7 +22,6 @@ import Control.Monad.State (get, modify, runStateT)
 import Data.Functor.Compose (Compose(Compose,getCompose))
 import qualified Data.IntMap as IntMap
 import Data.Proxy (Proxy(..))
-import Data.Semigroup.Applicative (Traversal(Traversal,getTraversal))
 import Data.Tagged (Tagged(..))
 import Generics.Deriving.Monoid (memptydefault, mappenddefault)
 import Test.Tasty.Runners
@@ -33,6 +32,7 @@ import Test.Tasty.Runners
   , trivialFold
   , resultSuccessful
   , resultDescription
+  , Traversal(Traversal,getTraversal)
   )
 import Test.Tasty.Options
   ( IsOption(defaultValue,parseValue,optionName,optionHelp)
