@@ -6,29 +6,69 @@
 -- | Run a 'Tasty.TestTree' and produce an HTML file summarising the test results.
 module Test.Tasty.Runners.Html (htmlRunner) where
 
-import Control.Applicative
-import Data.Foldable (forM_)
+import Prelude hiding (head, div)
+import Control.Applicative (Const(..), (<$), pure)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
+import Control.Concurrent.STM (atomically, readTVar, retry)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Monoid(..), Sum(..), (<>))
-import Data.Proxy (Proxy(..))
-import Data.Semigroup.Applicative (Traversal(..))
-import Data.Tagged (Tagged(..))
+import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
+import Data.Foldable (forM_)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
-import Generics.Deriving.Monoid (memptydefault, mappenddefault)
-
 import qualified Data.ByteString as B
-import qualified Control.Concurrent.STM as STM
-import qualified Control.Monad.State as State
-import qualified Data.Functor.Compose as Functor
+import Control.Monad.State (get, modify, runStateT)
+import Data.Functor.Compose (Compose(Compose,getCompose))
 import qualified Data.IntMap as IntMap
-import qualified Test.Tasty.Options as Tasty
-import qualified Test.Tasty.Runners as Tasty
-import Text.Blaze.Html5 ((!))
+import Data.Proxy (Proxy(..))
+import Data.Semigroup.Applicative (Traversal(Traversal,getTraversal))
+import Data.Tagged (Tagged(..))
+import Generics.Deriving.Monoid (memptydefault, mappenddefault)
+import Test.Tasty.Runners
+  ( Ingredient(TestReporter)
+  , Status(Done)
+  , TreeFold(foldSingle,foldGroup)
+  , foldTestTree
+  , trivialFold
+  , resultSuccessful
+  , resultDescription
+  )
+import Test.Tasty.Options
+  ( IsOption(defaultValue,parseValue,optionName,optionHelp)
+  , OptionDescription(Option)
+  , lookupOption
+  )
+import Text.Blaze.Html5
+  ( Markup
+  , AttributeValue
+  , (!)
+  , toMarkup
+  , docTypeHtml
+  , head
+  , meta
+  , body
+  , h1
+  , h5
+  , h6
+  , div
+  , p
+  , ul
+  , li
+  , pre
+  , small
+  , i
+  , br
+  , customAttribute
+  , unsafeByteString
+  )
 import qualified Text.Blaze.Html5 as H
-import qualified Text.Blaze.Html5.Attributes as HA
+import Text.Blaze.Html5.Attributes
+  ( lang
+  , charset
+  , name
+  , content
+  , class_
+  )
 import Text.Blaze.Html.Renderer.String (renderHtml)
 
 import Paths_tasty_html (getDataFileName)
@@ -37,7 +77,7 @@ import Paths_tasty_html (getDataFileName)
 newtype HtmlPath = HtmlPath FilePath
   deriving (Typeable)
 
-instance Tasty.IsOption (Maybe HtmlPath) where
+instance IsOption (Maybe HtmlPath) where
   defaultValue = Nothing
   parseValue = Just . Just . HtmlPath
   optionName = Tagged "html"
@@ -47,7 +87,7 @@ instance Tasty.IsOption (Maybe HtmlPath) where
 --------------------------------------------------------------------------------
 data Summary = Summary { summaryFailures :: Sum Int
                        , summarySuccesses :: Sum Int
-                       , htmlRenderer :: H.Markup
+                       , htmlRenderer :: Markup
                        } deriving (Generic)
 
 instance Monoid Summary where
@@ -64,23 +104,23 @@ instance Monoid Summary where
   @--html=results.html@ will run all the tests and generate @results.html@ as output.
 
 -}
-htmlRunner :: Tasty.Ingredient
-htmlRunner = Tasty.TestReporter optionDescription runner
+htmlRunner :: Ingredient
+htmlRunner = TestReporter optionDescription runner
  where
-  optionDescription = [ Tasty.Option (Proxy :: Proxy (Maybe HtmlPath)) ]
+  optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath)) ]
   runner options testTree = do
-    HtmlPath path <- Tasty.lookupOption options
+    HtmlPath path <- lookupOption options
 
     return $ \statusMap ->
 
       let
-        runTest _ testName _ = Traversal $ Functor.Compose $ do
-          i <- State.get
+        runTest _ testName _ = Traversal $ Compose $ do
+          ix <- get
 
-          summary <- lift $ STM.atomically $ do
-            status <- STM.readTVar $
+          summary <- lift $ atomically $ do
+            status <- readTVar $
               fromMaybe (error "Attempted to lookup test by index outside bounds") $
-              IntMap.lookup i statusMap
+              IntMap.lookup ix statusMap
 
             let leave = branch testName False
 
@@ -104,18 +144,18 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
             case status of
               -- If the test is done, generate HTML for it
-              Tasty.Done result
-                | Tasty.resultSuccessful result -> pure $
-                    mkSuccess $ Tasty.resultDescription result
-                | otherwise -> pure $ mkFailure $ Tasty.resultDescription result
+              Done result
+                | resultSuccessful result -> pure $
+                    mkSuccess $ resultDescription result
+                | otherwise -> pure $ mkFailure $ resultDescription result
               -- Otherwise the test has either not been started or is currently
               -- executing
-              _ -> STM.retry
+              _ -> retry
 
-          Const summary <$ State.modify (+1)
+          Const summary <$ modify (+1)
 
-        runGroup groupName children = Traversal $ Functor.Compose $ do
-          Const soFar <- Functor.getCompose $ getTraversal children
+        runGroup groupName children = Traversal $ Compose $ do
+          Const soFar <- getCompose $ getTraversal children
           let groupBranch = branch groupName True Nothing "icon-folder-open"
               grouped = item $ do
                 if summaryFailures soFar > Sum 0
@@ -128,80 +168,80 @@ htmlRunner = Tasty.TestReporter optionDescription runner
 
       in do
         (Const summary, tests) <-
-          flip State.runStateT 0 $ Functor.getCompose $ getTraversal $
-          Tasty.foldTestTree
-            Tasty.trivialFold { Tasty.foldSingle = runTest
-                              , Tasty.foldGroup = runGroup
-                              }
+          flip runStateT 0 $ getCompose $ getTraversal $
+          foldTestTree
+            trivialFold { foldSingle = runTest
+                        , foldGroup = runGroup
+                        }
             options
             testTree
 
-        css           <- includeMarkup "data/bootstrap-combined.min.css"
-        style         <- includeMarkup "data/style.css"
+        bootStrapCSS  <- includeMarkup "data/bootstrap-combined.min.css"
+        customCSS     <- includeMarkup "data/style.css"
         jquery        <- includeScript "data/jquery-2.1.0.min.js"
         bootstrapTree <- includeScript "data/bootstrap-tree.js"
 
         writeFile path $
           renderHtml $
-            H.docTypeHtml ! HA.lang "en" $ do
-              H.head $ do
-                H.meta ! HA.charset "utf-8"
+            docTypeHtml ! lang "en" $ do
+              head $ do
+                meta ! charset "utf-8"
                 H.title "Tasty Test Results"
-                H.meta ! HA.name "viewport"
-                       ! HA.content "width=device-width, initial-scale=1.0"
-                H.style css
-                H.style style
+                meta ! name "viewport"
+                     ! content "width=device-width, initial-scale=1.0"
+                H.style bootStrapCSS
+                H.style customCSS
                 jquery
                 bootstrapTree
-              H.body $ H.div ! HA.class_ "container" $ do
-                H.h1 ! HA.class_ "text-center" $ "Tasty Test Results"
-                H.div ! HA.class_ "row" $
+              body $ div ! class_ "container" $ do
+                h1 ! class_ "text-center" $ "Tasty Test Results"
+                div ! class_ "row" $
                   if summaryFailures summary > Sum 0
                     then
-                      H.div ! HA.class_ "alert alert-block alert-error" $
-                        H.p ! HA.class_ "lead text-center" $ do
-                          H.toMarkup . getSum $ summaryFailures summary
-                          " out of " :: H.Markup
-                          H.toMarkup tests
+                      div ! class_ "alert alert-block alert-error" $
+                        p ! class_ "lead text-center" $ do
+                          toMarkup . getSum $ summaryFailures summary
+                          " out of " :: Markup
+                          toMarkup tests
                           " tests failed"
                     else
-                      H.div ! HA.class_ "alert alert-block alert-success" $
-                        H.p ! HA.class_ "lead text-center" $ do
-                          "All " :: H.Markup
-                          H.toMarkup tests
+                      div ! class_ "alert alert-block alert-success" $
+                        p ! class_ "lead text-center" $ do
+                          "All " :: Markup
+                          toMarkup tests
                           " tests passed"
 
-                H.div ! HA.class_ "row" $
-                  H.div ! HA.class_ "tree well" $
-                    H.toMarkup $ tree $ htmlRenderer summary
+                div ! class_ "row" $
+                  div ! class_ "tree well" $
+                    toMarkup $ tree $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 
   includeMarkup =
-    getDataFileName >=> B.readFile >=> return . H.unsafeByteString
+    getDataFileName >=> B.readFile >=> return . unsafeByteString
 
   includeScript =
     getDataFileName >=> B.readFile >=> \bs ->
-    return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
+    return . unsafeByteString $ "<script>" <> bs <> "</script>"
 
-  item = H.li ! HA.class_ "parent_li"
-              ! H.customAttribute "role" "treeitem"
+  item = li ! class_ "parent_li"
+            ! customAttribute "role" "treeitem"
 
-  tree  = H.ul ! H.customAttribute "role" "tree"
+  tree  = ul ! customAttribute "role" "tree"
 
 branch :: String
        -> Bool
-       -> Maybe (String, H.AttributeValue)
-       -> H.AttributeValue
-       -> H.AttributeValue
-       -> H.AttributeValue
-       -> H.Markup
-branch name isBig mdesc icon class_ text = do
-  H.span ! HA.class_ class_ $
-    H.i ! HA.class_ icon $ ""
-  (if isBig then H.h5 else H.h6) ! HA.class_ text $
-    H.toMarkup $ "  " ++ name
+       -> Maybe (String, AttributeValue)
+       -> AttributeValue
+       -> AttributeValue
+       -> AttributeValue
+       -> Markup
+branch name_ isBig mdesc icon clas_ text = do
+  H.span ! class_ clas_ $
+    i ! class_ icon $ ""
+  (if isBig then h5 else h6) ! class_ text $
+    toMarkup $ "  " ++ name_
   forM_ mdesc $ \(desc,desca) ->
     unless (null desc) $ do
-      H.br
-      H.pre $ H.small ! HA.class_ desca $ H.toMarkup desc
+      br
+      pre $ small ! class_ desca $ toMarkup desc
