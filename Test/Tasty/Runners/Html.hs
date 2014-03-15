@@ -6,7 +6,6 @@
 -- | Run a 'Tasty.TestTree' and produce an HTML file summarising the test results.
 module Test.Tasty.Runners.Html (htmlRunner) where
 
-import Prelude hiding (head, div)
 import Control.Applicative (Const(..), (<$), pure)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
@@ -27,49 +26,13 @@ import Generics.Deriving.Monoid (memptydefault, mappenddefault)
 import Test.Tasty.Runners
   ( Ingredient(TestReporter)
   , Status(Done)
-  , TreeFold(foldSingle,foldGroup)
-  , foldTestTree
-  , trivialFold
-  , resultSuccessful
-  , resultDescription
   , Traversal(Traversal,getTraversal)
   )
-import Test.Tasty.Options
-  ( IsOption(defaultValue,parseValue,optionName,optionHelp)
-  , OptionDescription(Option)
-  , lookupOption
-  )
-import Text.Blaze.Html5
-  ( Markup
-  , AttributeValue
-  , (!)
-  , toMarkup
-  , docTypeHtml
-  , head
-  , meta
-  , body
-  , h1
-  , h5
-  , h6
-  , div
-  , p
-  , ul
-  , li
-  , pre
-  , small
-  , i
-  , br
-  , customAttribute
-  , unsafeByteString
-  )
+import qualified Test.Tasty.Runners as Tasty
+import Test.Tasty.Options as Tasty
+import Text.Blaze.Html5 (Markup, AttributeValue, (!))
 import qualified Text.Blaze.Html5 as H
-import Text.Blaze.Html5.Attributes
-  ( lang
-  , charset
-  , name
-  , content
-  , class_
-  )
+import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 
 import Paths_tasty_html (getDataFileName)
@@ -146,9 +109,9 @@ htmlRunner = TestReporter optionDescription runner
             case status of
               -- If the test is done, generate HTML for it
               Done result
-                | resultSuccessful result -> pure $
-                    mkSuccess $ resultDescription result
-                | otherwise -> pure $ mkFailure $ resultDescription result
+                | Tasty.resultSuccessful result -> pure $
+                    mkSuccess $ Tasty.resultDescription result
+                | otherwise -> pure $ mkFailure $ Tasty.resultDescription result
               -- Otherwise the test has either not been started or is currently
               -- executing
               _ -> retry
@@ -170,10 +133,10 @@ htmlRunner = TestReporter optionDescription runner
       in do
         (Const summary, tests) <-
           flip runStateT 0 $ getCompose $ getTraversal $
-          foldTestTree
-            trivialFold { foldSingle = runTest
-                        , foldGroup = runGroup
-                        }
+          Tasty.foldTestTree
+            Tasty.trivialFold { Tasty.foldSingle = runTest
+                              , Tasty.foldGroup = runGroup
+                              }
             options
             testTree
 
@@ -184,51 +147,51 @@ htmlRunner = TestReporter optionDescription runner
 
         TIO.writeFile path $
           renderHtml $
-            docTypeHtml ! lang "en" $ do
-              head $ do
-                meta ! charset "utf-8"
+            H.docTypeHtml ! A.lang "en" $ do
+              H.head $ do
+                H.meta ! A.charset "utf-8"
                 H.title "Tasty Test Results"
-                meta ! name "viewport"
-                     ! content "width=device-width, initial-scale=1.0"
+                H.meta ! A.name "viewport"
+                     ! A.content "width=device-width, initial-scale=1.0"
                 H.style bootStrapCSS
                 H.style customCSS
                 jquery
                 bootstrapTree
-              body $ div ! class_ "container" $ do
-                h1 ! class_ "text-center" $ "Tasty Test Results"
-                div ! class_ "row" $
+              H.body $ H.div ! A.class_ "container" $ do
+                H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
+                H.div ! A.class_ "row" $
                   if summaryFailures summary > Sum 0
                     then
-                      div ! class_ "alert alert-block alert-error" $
-                        p ! class_ "lead text-center" $ do
-                          toMarkup . getSum $ summaryFailures summary
+                      H.div ! A.class_ "alert alert-block alert-error" $
+                        H.p ! A.class_ "lead text-center" $ do
+                          H.toMarkup . getSum $ summaryFailures summary
                           " out of " :: Markup
-                          toMarkup tests
+                          H.toMarkup tests
                           " tests failed"
                     else
-                      div ! class_ "alert alert-block alert-success" $
-                        p ! class_ "lead text-center" $ do
+                      H.div ! A.class_ "alert alert-block alert-success" $
+                        H.p ! A.class_ "lead text-center" $ do
                           "All " :: Markup
-                          toMarkup tests
+                          H.toMarkup tests
                           " tests passed"
 
-                div ! class_ "row" $
-                  div ! class_ "tree well" $
-                    toMarkup $ tree $ htmlRenderer summary
+                H.div ! A.class_ "row" $
+                  H.div ! A.class_ "tree well" $
+                    H.toMarkup $ tree $ htmlRenderer summary
 
         return $ getSum (summaryFailures summary) == 0
 
   includeMarkup =
-    getDataFileName >=> B.readFile >=> return . unsafeByteString
+    getDataFileName >=> B.readFile >=> return . H.unsafeByteString
 
   includeScript =
     getDataFileName >=> B.readFile >=> \bs ->
-    return . unsafeByteString $ "<script>" <> bs <> "</script>"
+    return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
-  item = li ! class_ "parent_li"
-            ! customAttribute "role" "treeitem"
+  item = H.li ! A.class_ "parent_li"
+            ! H.customAttribute "role" "treeitem"
 
-  tree  = ul ! customAttribute "role" "tree"
+  tree  = H.ul ! H.customAttribute "role" "tree"
 
 branch :: String
        -> Bool
@@ -238,11 +201,11 @@ branch :: String
        -> AttributeValue
        -> Markup
 branch name_ isBig mdesc icon clas_ text = do
-  H.span ! class_ clas_ $
-    i ! class_ icon $ ""
-  (if isBig then h5 else h6) ! class_ text $
-    toMarkup $ "  " ++ name_
+  H.span ! A.class_ clas_ $
+    H.i ! A.class_ icon $ ""
+  (if isBig then H.h5 else H.h6) ! A.class_ text $
+    H.toMarkup $ "  " ++ name_
   forM_ mdesc $ \(desc,desca) ->
     unless (null desc) $ do
-      br
-      pre $ small ! class_ desca $ toMarkup desc
+      H.br
+      H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
