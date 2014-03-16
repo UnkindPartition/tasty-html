@@ -196,22 +196,31 @@ generateHtml summary tests path = do
 
 -- * HTML generation helpers
 
+-- | Create a @bootstrap-tree@ HTML /tree/.
 tree :: Markup -> Markup
 tree  = H.ul ! H.customAttribute "role" "tree"
 
+-- | Create a @bootstrap-tree@ HTML /treeitem/
 item :: Markup -> Markup
 item = H.li ! A.class_ "parent_li"
             ! H.customAttribute "role" "treeitem"
 
-branch :: String
-       -> Bool
-       -> Maybe (String, AttributeValue)
-       -> AttributeValue
-       -> AttributeValue
-       -> AttributeValue
+type CssDescription = Maybe (String, AttributeValue)
+type CssIcon  = AttributeValue
+type CssExtra = AttributeValue
+type CssText  = AttributeValue
+
+-- | Helper function to generate an HTML tag corresponding to a either a node
+-- or a leave in the tree.
+branch :: String         -- ^ Name of the branch.
+       -> Bool           -- ^ Whether the text will be big or not.
+       -> CssDescription -- ^ Description to add to the branch if applicable.
+       -> CssIcon        -- ^ CSS corresponding to the icon for the branch.
+       -> CssExtra       -- ^ Extra CSS classes for the branch.
+       -> CssText        -- ^ CSS class for text inside the branch.
        -> Markup
-branch name_ isBig mdesc icon clas_ text = do
-  H.span ! A.class_ clas_ $
+branch name_ isBig mdesc icon extra text = do
+  H.span ! A.class_ extra $
     H.i ! A.class_ icon $ ""
   (if isBig then H.h5 else H.h6) ! A.class_ text $
     H.toMarkup $ "  " ++ name_
