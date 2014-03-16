@@ -140,58 +140,68 @@ htmlRunner = TestReporter optionDescription runner
             options
             testTree
 
-        bootStrapCSS  <- includeMarkup "data/bootstrap-combined.min.css"
-        customCSS     <- includeMarkup "data/style.css"
-        jquery        <- includeScript "data/jquery-2.1.0.min.js"
-        bootstrapTree <- includeScript "data/bootstrap-tree.js"
-
-        TIO.writeFile path $
-          renderHtml $
-            H.docTypeHtml ! A.lang "en" $ do
-              H.head $ do
-                H.meta ! A.charset "utf-8"
-                H.title "Tasty Test Results"
-                H.meta ! A.name "viewport"
-                     ! A.content "width=device-width, initial-scale=1.0"
-                H.style bootStrapCSS
-                H.style customCSS
-                jquery
-                bootstrapTree
-              H.body $ H.div ! A.class_ "container" $ do
-                H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
-                H.div ! A.class_ "row" $
-                  if summaryFailures summary > Sum 0
-                    then
-                      H.div ! A.class_ "alert alert-block alert-error" $
-                        H.p ! A.class_ "lead text-center" $ do
-                          H.toMarkup . getSum $ summaryFailures summary
-                          " out of " :: Markup
-                          H.toMarkup tests
-                          " tests failed"
-                    else
-                      H.div ! A.class_ "alert alert-block alert-success" $
-                        H.p ! A.class_ "lead text-center" $ do
-                          "All " :: Markup
-                          H.toMarkup tests
-                          " tests passed"
-
-                H.div ! A.class_ "row" $
-                  H.div ! A.class_ "tree well" $
-                    H.toMarkup $ tree $ htmlRenderer summary
+        generateHtml summary tests path
 
         return $ getSum (summaryFailures summary) == 0
 
-  includeMarkup =
-    getDataFileName >=> B.readFile >=> return . H.unsafeByteString
+-- | Generates the final HTML report
+generateHtml :: Summary  -- ^ Test summary
+             -> Int      -- ^ Number of tests
+             -> FilePath -- ^ Where to write
+             -> IO ()
+generateHtml summary tests path = do
+  let getRead = getDataFileName >=> B.readFile
+      includeMarkup = getRead >=> return . H.unsafeByteString
+      includeScript = getRead >=> \bs ->
+        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
-  includeScript =
-    getDataFileName >=> B.readFile >=> \bs ->
-    return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
+  bootStrapCSS  <- includeMarkup "data/bootstrap-combined.min.css"
+  customCSS     <- includeMarkup "data/style.css"
+  jquery        <- includeScript "data/jquery-2.1.0.min.js"
+  bootstrapTree <- includeScript "data/bootstrap-tree.js"
 
-  item = H.li ! A.class_ "parent_li"
+  TIO.writeFile path $
+    renderHtml $
+    H.docTypeHtml ! A.lang "en" $
+      H.head $ do
+        H.meta ! A.charset "utf-8"
+        H.title "Tasty Test Results"
+        H.meta ! A.name "viewport"
+               ! A.content "width=device-width, initial-scale=1.0"
+        H.style bootStrapCSS
+        H.style customCSS
+        jquery
+        bootstrapTree
+        H.body $ H.div ! A.class_ "container" $ do
+        H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
+        H.div ! A.class_ "row" $
+          if summaryFailures summary > Sum 0
+            then
+              H.div ! A.class_ "alert alert-block alert-error" $
+                H.p ! A.class_ "lead text-center" $ do
+                  H.toMarkup . getSum $ summaryFailures summary
+                  " out of " :: Markup
+                  H.toMarkup tests
+                  " tests failed"
+            else
+              H.div ! A.class_ "alert alert-block alert-success" $
+                H.p ! A.class_ "lead text-center" $ do
+                  "All " :: Markup
+                  H.toMarkup tests
+                  " tests passed"
+
+        H.div ! A.class_ "row" $
+           H.div ! A.class_ "tree well" $
+           H.toMarkup $ tree $ htmlRenderer summary
+
+-- * HTML generation helpers
+
+tree :: Markup -> Markup
+tree  = H.ul ! H.customAttribute "role" "tree"
+
+item :: Markup -> Markup
+item = H.li ! A.class_ "parent_li"
             ! H.customAttribute "role" "treeitem"
-
-  tree  = H.ul ! H.customAttribute "role" "tree"
 
 branch :: String
        -> Bool
