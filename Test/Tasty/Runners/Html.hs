@@ -37,29 +37,6 @@ import Text.Blaze.Html.Renderer.Text (renderHtml)
 
 import Paths_tasty_html (getDataFileName)
 
---------------------------------------------------------------------------------
-newtype HtmlPath = HtmlPath FilePath
-  deriving (Typeable)
-
-instance IsOption (Maybe HtmlPath) where
-  defaultValue = Nothing
-  parseValue = Just . Just . HtmlPath
-  optionName = Tagged "html"
-  optionHelp = Tagged "A file path to store the test results in Html"
-
-
---------------------------------------------------------------------------------
-data Summary = Summary { summaryFailures :: Sum Int
-                       , summarySuccesses :: Sum Int
-                       , htmlRenderer :: Markup
-                       } deriving (Generic)
-
-instance Monoid Summary where
-  mempty = memptydefault
-  mappend = mappenddefault
-
-
---------------------------------------------------------------------------------
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
     tests if you pass the @--html@ command line option. For example,
@@ -145,6 +122,30 @@ htmlRunner = TestReporter optionDescription runner
 
         return $ getSum (summaryFailures summary) == 0
 
+-- * Internal
+
+-- ** Types
+
+newtype HtmlPath = HtmlPath FilePath
+  deriving (Typeable)
+
+instance IsOption (Maybe HtmlPath) where
+  defaultValue = Nothing
+  parseValue = Just . Just . HtmlPath
+  optionName = Tagged "html"
+  optionHelp = Tagged "A file path to store the test results in Html"
+
+data Summary = Summary { summaryFailures :: Sum Int
+                       , summarySuccesses :: Sum Int
+                       , htmlRenderer :: Markup
+                       } deriving (Generic)
+
+instance Monoid Summary where
+  mempty = memptydefault
+  mappend = mappenddefault
+
+-- ** HTML
+
 -- | Generates the final HTML report.
 generateHtml :: Summary  -- ^ Test summary.
              -> Int      -- ^ Number of tests.
@@ -196,8 +197,6 @@ generateHtml summary tests path = do
             H.div ! A.class_ "row" $
               H.div ! A.class_ "tree well" $
                 H.toMarkup $ treeMarkup $ htmlRenderer summary
-
--- * HTML generation helpers
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
