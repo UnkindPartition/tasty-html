@@ -17,7 +17,7 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
-import Control.Monad.State (runStateT)
+import Control.Monad.State (StateT, runStateT)
 import qualified Control.Monad.State as State (get, modify)
 import Data.Functor.Compose (Compose(Compose,getCompose))
 import qualified Data.IntMap as IntMap
@@ -29,6 +29,7 @@ import Test.Tasty.Runners
   , Status(Done)
   , Traversal(Traversal,getTraversal)
   )
+import Test.Tasty.Providers (IsTest, TestName)
 import qualified Test.Tasty.Runners as Tasty
 import Test.Tasty.Options as Tasty
 import Text.Blaze.Html5 (Markup, AttributeValue, (!))
@@ -53,6 +54,7 @@ htmlRunner = TestReporter optionDescription runner
 
     return $ \statusMap ->
       let
+        runTest :: IsTest t => OptionSet -> TestName -> t -> SummaryTraversal
         runTest _ testName _ = Traversal $ Compose $ do
           ix <- State.get
 
@@ -96,6 +98,7 @@ htmlRunner = TestReporter optionDescription runner
 
           Const summary <$ State.modify (+1)
 
+        runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
         runGroup groupName children = Traversal $ Compose $ do
           Const soFar <- getCompose $ getTraversal children
 
@@ -116,7 +119,7 @@ htmlRunner = TestReporter optionDescription runner
           flip runStateT 0 $ getCompose $ getTraversal $
             Tasty.foldTestTree
               Tasty.trivialFold { Tasty.foldSingle = runTest
-                                , Tasty.foldGroup = runGroup
+                                , Tasty.foldGroup  = runGroup
                                 }
               options
               testTree
@@ -146,6 +149,8 @@ data Summary = Summary { summaryFailures :: Sum Int
 instance Monoid Summary where
   mempty = memptydefault
   mappend = mappenddefault
+
+type SummaryTraversal = Traversal (Compose (StateT Int IO) (Const Summary))
 
 -- ** HTML
 
