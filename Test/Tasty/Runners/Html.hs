@@ -17,7 +17,8 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
-import Control.Monad.State (get, modify, runStateT)
+import Control.Monad.State (runStateT)
+import qualified Control.Monad.State as State (get, modify)
 import Data.Functor.Compose (Compose(Compose,getCompose))
 import qualified Data.IntMap as IntMap
 import Data.Proxy (Proxy(..))
@@ -53,7 +54,7 @@ htmlRunner = TestReporter optionDescription runner
     return $ \statusMap ->
       let
         runTest _ testName _ = Traversal $ Compose $ do
-          ix <- get
+          ix <- State.get
 
           summary <- lift $ atomically $ do
             status <- readTVar $
@@ -93,7 +94,7 @@ htmlRunner = TestReporter optionDescription runner
               -- executing
               _ -> retry
 
-          Const summary <$ modify (+1)
+          Const summary <$ State.modify (+1)
 
         runGroup groupName children = Traversal $ Compose $ do
           Const soFar <- getCompose $ getTraversal children
@@ -108,8 +109,7 @@ htmlRunner = TestReporter optionDescription runner
                   else testGroupMarkup "badge badge-success" "text-success"
                 treeMarkup $ htmlRenderer soFar
 
-          pure $ Const
-            soFar { htmlRenderer = grouped }
+          pure $ Const soFar { htmlRenderer = grouped }
 
       in do
         (Const summary, tests) <-
