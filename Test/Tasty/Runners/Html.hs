@@ -162,37 +162,38 @@ generateHtml summary tests path = do
 
   TIO.writeFile path $
     renderHtml $
-    H.docTypeHtml ! A.lang "en" $
-      H.head $ do
-        H.meta ! A.charset "utf-8"
-        H.title "Tasty Test Results"
-        H.meta ! A.name "viewport"
-               ! A.content "width=device-width, initial-scale=1.0"
-        H.style bootStrapCSS
-        H.style customCSS
-        jquery
-        bootstrapTree
-        H.body $ H.div ! A.class_ "container" $ do
-        H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
-        H.div ! A.class_ "row" $
-          if summaryFailures summary > Sum 0
-            then
-              H.div ! A.class_ "alert alert-block alert-error" $
-                H.p ! A.class_ "lead text-center" $ do
-                  H.toMarkup . getSum $ summaryFailures summary
-                  " out of " :: Markup
-                  H.toMarkup tests
-                  " tests failed"
-            else
-              H.div ! A.class_ "alert alert-block alert-success" $
-                H.p ! A.class_ "lead text-center" $ do
-                  "All " :: Markup
-                  H.toMarkup tests
-                  " tests passed"
+      H.docTypeHtml ! A.lang "en" $
+        H.head $ do
+          H.meta ! A.charset "utf-8"
+          H.title "Tasty Test Results"
+          H.meta ! A.name "viewport"
+                 ! A.content "width=device-width, initial-scale=1.0"
+          H.style bootStrapCSS
+          H.style customCSS
+          jquery
+          bootstrapTree
 
-        H.div ! A.class_ "row" $
-           H.div ! A.class_ "tree well" $
-           H.toMarkup $ tree $ htmlRenderer summary
+          H.body $ H.div ! A.class_ "container" $ do
+            H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
+            H.div ! A.class_ "row" $
+              if summaryFailures summary > Sum 0
+                then
+                  H.div ! A.class_ "alert alert-block alert-error" $
+                    H.p ! A.class_ "lead text-center" $ do
+                      H.toMarkup . getSum $ summaryFailures summary
+                      " out of " :: Markup
+                      H.toMarkup tests
+                      " tests failed"
+                else
+                  H.div ! A.class_ "alert alert-block alert-success" $
+                    H.p ! A.class_ "lead text-center" $ do
+                      "All " :: Markup
+                      H.toMarkup tests
+                      " tests passed"
+
+            H.div ! A.class_ "row" $
+              H.div ! A.class_ "tree well" $
+                H.toMarkup $ tree $ htmlRenderer summary
 
 -- * HTML generation helpers
 
