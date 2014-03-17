@@ -9,7 +9,7 @@ module Test.Tasty.Runners.Html (htmlRunner) where
 import Control.Applicative (Const(..), (<$), pure)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
-import Control.Concurrent.STM (atomically, readTVar, retry)
+import Control.Concurrent.STM (TVar, atomically, readTVar, retry)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
 import Data.Foldable (forM_)
@@ -20,6 +20,7 @@ import qualified Data.ByteString as B
 import Control.Monad.State (StateT, runStateT)
 import qualified Control.Monad.State as State (get, modify)
 import Data.Functor.Compose (Compose(Compose,getCompose))
+import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.Proxy (Proxy(..))
 import Data.Tagged (Tagged(..))
@@ -51,82 +52,18 @@ htmlRunner = TestReporter optionDescription runner
   optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath)) ]
   runner options testTree = do
     HtmlPath path <- lookupOption options
+    return $ \statusMap -> do
+      (Const summary, tests) <- flip runStateT 0 $ getCompose $ getTraversal $
+        Tasty.foldTestTree
+          Tasty.trivialFold { Tasty.foldSingle = runTest statusMap
+                            , Tasty.foldGroup  = runGroup
+                            }
+          options
+          testTree
 
-    return $ \statusMap ->
-      let
-        runTest :: IsTest t => OptionSet -> TestName -> t -> SummaryTraversal
-        runTest _ testName _ = Traversal $ Compose $ do
-          ix <- State.get
+      generateHtml summary tests path
 
-          summary <- lift $ atomically $ do
-            status <- readTVar $
-              fromMaybe (error "Attempted to lookup test by \
-                               \index outside bounds") $
-              IntMap.lookup ix statusMap
-
-            let testItemMarkup = branchMarkup testName False
-
-                mkSummary contents =
-                  mempty { htmlRenderer = itemMarkup contents }
-
-                mkSuccess desc =
-                  ( mkSummary $ testItemMarkup
-                      (Just (desc, "muted"))
-                      "icon-ok-sign"
-                      "badge badge-success"
-                      "text-success"
-                  ) { summarySuccesses = Sum 1 }
-
-                mkFailure desc =
-                  ( mkSummary $ testItemMarkup
-                      (Just (desc, "text-error"))
-                      "icon-remove-sign"
-                      "badge badge-important"
-                      "text-error"
-                  ) { summaryFailures = Sum 1 }
-
-            case status of
-              -- If the test is done, generate HTML for it
-              Done result
-                | Tasty.resultSuccessful result -> pure $
-                    mkSuccess $ Tasty.resultDescription result
-                | otherwise ->
-                    pure $ mkFailure $ Tasty.resultDescription result
-              -- Otherwise the test has either not been started or is currently
-              -- executing
-              _ -> retry
-
-          Const summary <$ State.modify (+1)
-
-        runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
-        runGroup groupName children = Traversal $ Compose $ do
-          Const soFar <- getCompose $ getTraversal children
-
-          let testGroupMarkup = branchMarkup groupName
-                                             True
-                                             Nothing
-                                             "icon-folder-open"
-              grouped = itemMarkup $ do
-                if summaryFailures soFar > Sum 0
-                  then testGroupMarkup "badge badge-important" "text-error"
-                  else testGroupMarkup "badge badge-success" "text-success"
-                treeMarkup $ htmlRenderer soFar
-
-          pure $ Const soFar { htmlRenderer = grouped }
-
-      in do
-        (Const summary, tests) <-
-          flip runStateT 0 $ getCompose $ getTraversal $
-            Tasty.foldTestTree
-              Tasty.trivialFold { Tasty.foldSingle = runTest
-                                , Tasty.foldGroup  = runGroup
-                                }
-              options
-              testTree
-
-        generateHtml summary tests path
-
-        return $ getSum (summaryFailures summary) == 0
+      return $ getSum (summaryFailures summary) == 0
 
 -- * Internal
 
@@ -150,7 +87,74 @@ instance Monoid Summary where
   mempty = memptydefault
   mappend = mappenddefault
 
+-- Represents a Traverals of a Summary and a test count.
 type SummaryTraversal = Traversal (Compose (StateT Int IO) (Const Summary))
+
+type StatusMap = IntMap (TVar Status)
+
+-- ** Test folding
+
+-- | To be used for an individual test when when folding the final 'TestTree'.
+runTest :: IsTest t
+        => StatusMap -> OptionSet -> TestName -> t -> SummaryTraversal
+runTest statusMap _ testName _ = Traversal $ Compose $ do
+  ix <- State.get
+
+  summary <- lift $ atomically $ do
+    status <- readTVar $
+      fromMaybe (error "Attempted to lookup test by index outside bounds") $
+      IntMap.lookup ix statusMap
+
+    let testItemMarkup = branchMarkup testName False
+
+        mkSummary contents =
+          mempty { htmlRenderer = itemMarkup contents }
+
+        mkSuccess desc =
+          ( mkSummary $ testItemMarkup
+              (Just (desc, "muted"))
+              "icon-ok-sign"
+              "badge badge-success"
+              "text-success"
+          ) { summarySuccesses = Sum 1 }
+
+        mkFailure desc =
+          ( mkSummary $ testItemMarkup
+              (Just (desc, "text-error"))
+              "icon-remove-sign"
+              "badge badge-important"
+              "text-error"
+          ) { summaryFailures = Sum 1 }
+
+    case status of
+      -- If the test is done, generate HTML for it
+      Done result
+        | Tasty.resultSuccessful result -> pure $
+            mkSuccess $ Tasty.resultDescription result
+        | otherwise ->
+            pure $ mkFailure $ Tasty.resultDescription result
+      -- Otherwise the test has either not been started or is currently
+      -- executing
+      _ -> retry
+
+  Const summary <$ State.modify (+1)
+
+-- | To be used for a 'TestGroup' when when folding the final 'TestTree'.
+runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
+runGroup groupName children = Traversal $ Compose $ do
+  Const soFar <- getCompose $ getTraversal children
+
+  let testGroupMarkup = branchMarkup groupName
+                                      True
+                                      Nothing
+                                      "icon-folder-open"
+      grouped = itemMarkup $ do
+        if summaryFailures soFar > Sum 0
+          then testGroupMarkup "badge badge-important" "text-error"
+          else testGroupMarkup "badge badge-success" "text-success"
+        treeMarkup $ htmlRenderer soFar
+
+  pure $ Const soFar { htmlRenderer = grouped }
 
 -- ** HTML
 
