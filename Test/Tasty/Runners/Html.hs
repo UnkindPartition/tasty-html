@@ -51,7 +51,6 @@ htmlRunner = TestReporter optionDescription runner
     HtmlPath path <- lookupOption options
 
     return $ \statusMap ->
-
       let
         runTest _ testName _ = Traversal $ Compose $ do
           ix <- get
@@ -64,7 +63,8 @@ htmlRunner = TestReporter optionDescription runner
 
             let testItemMarkup = branchMarkup testName False
 
-                mkSummary contents = mempty { htmlRenderer = itemMarkup contents }
+                mkSummary contents =
+                  mempty { htmlRenderer = itemMarkup contents }
 
                 mkSuccess desc =
                   ( mkSummary $ testItemMarkup
@@ -98,7 +98,10 @@ htmlRunner = TestReporter optionDescription runner
         runGroup groupName children = Traversal $ Compose $ do
           Const soFar <- getCompose $ getTraversal children
 
-          let testGroupMarkup = branchMarkup groupName True Nothing "icon-folder-open"
+          let testGroupMarkup = branchMarkup groupName
+                                             True
+                                             Nothing
+                                             "icon-folder-open"
               grouped = itemMarkup $ do
                 if summaryFailures soFar > Sum 0
                   then testGroupMarkup "badge badge-important" "text-error"
@@ -111,12 +114,12 @@ htmlRunner = TestReporter optionDescription runner
       in do
         (Const summary, tests) <-
           flip runStateT 0 $ getCompose $ getTraversal $
-          Tasty.foldTestTree
-            Tasty.trivialFold { Tasty.foldSingle = runTest
-                              , Tasty.foldGroup = runGroup
-                              }
-            options
-            testTree
+            Tasty.foldTestTree
+              Tasty.trivialFold { Tasty.foldSingle = runTest
+                                , Tasty.foldGroup = runGroup
+                                }
+              options
+              testTree
 
         generateHtml summary tests path
 
