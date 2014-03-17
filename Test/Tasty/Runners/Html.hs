@@ -85,24 +85,24 @@ htmlRunner = TestReporter optionDescription runner
                                \index outside bounds") $
               IntMap.lookup ix statusMap
 
-            let leave = branch testName False
+            let testItemMarkup = branchMarkup testName False
 
-                mkSummary contents = mempty { htmlRenderer = item contents }
+                mkSummary contents = mempty { htmlRenderer = itemMarkup contents }
 
                 mkSuccess desc =
-                  ( mkSummary $
-                      leave (Just (desc, "muted"))
-                            "icon-ok-sign"
-                            "badge badge-success"
-                            "text-success"
+                  ( mkSummary $ testItemMarkup
+                      (Just (desc, "muted"))
+                      "icon-ok-sign"
+                      "badge badge-success"
+                      "text-success"
                   ) { summarySuccesses = Sum 1 }
 
                 mkFailure desc =
-                  ( mkSummary $
-                      leave (Just (desc, "text-error"))
-                            "icon-remove-sign"
-                            "badge badge-important"
-                            "text-error"
+                  ( mkSummary $ testItemMarkup
+                      (Just (desc, "text-error"))
+                      "icon-remove-sign"
+                      "badge badge-important"
+                      "text-error"
                   ) { summaryFailures = Sum 1 }
 
             case status of
@@ -120,12 +120,13 @@ htmlRunner = TestReporter optionDescription runner
 
         runGroup groupName children = Traversal $ Compose $ do
           Const soFar <- getCompose $ getTraversal children
-          let groupBranch = branch groupName True Nothing "icon-folder-open"
-              grouped = item $ do
+
+          let testGroupMarkup = branchMarkup groupName True Nothing "icon-folder-open"
+              grouped = itemMarkup $ do
                 if summaryFailures soFar > Sum 0
-                  then groupBranch "badge badge-important" "text-error"
-                  else groupBranch "badge badge-success" "text-success"
-                tree $ htmlRenderer soFar
+                  then testGroupMarkup "badge badge-important" "text-error"
+                  else testGroupMarkup "badge badge-success" "text-success"
+                treeMarkup $ htmlRenderer soFar
 
           pure $ Const
             soFar { htmlRenderer = grouped }
@@ -194,17 +195,17 @@ generateHtml summary tests path = do
 
             H.div ! A.class_ "row" $
               H.div ! A.class_ "tree well" $
-                H.toMarkup $ tree $ htmlRenderer summary
+                H.toMarkup $ treeMarkup $ htmlRenderer summary
 
 -- * HTML generation helpers
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
-tree :: Markup -> Markup
-tree  = H.ul ! H.customAttribute "role" "tree"
+treeMarkup :: Markup -> Markup
+treeMarkup  = H.ul ! H.customAttribute "role" "tree"
 
 -- | Create a @bootstrap-tree@ HTML /treeitem/
-item :: Markup -> Markup
-item = H.li ! A.class_ "parent_li"
+itemMarkup :: Markup -> Markup
+itemMarkup = H.li ! A.class_ "parent_li"
             ! H.customAttribute "role" "treeitem"
 
 type MaybeCssDescription = Maybe (String, AttributeValue)
@@ -215,7 +216,7 @@ type CssText  = AttributeValue
 {-| Helper function to generate an HTML tag corresponding to a either a node or
     a leave in a @bootstrap-tree* HTML tree.
 -}
-branch :: String
+branchMarkup :: String
        -- ^ Name of the branch.
        -> Bool
        -- ^ Whether the text will be big or not.
@@ -228,7 +229,7 @@ branch :: String
        -> CssText
        -- ^ CSS class for text inside the branch.
        -> Markup
-branch name_ isBig mdesc icon extra text = do
+branchMarkup name_ isBig mdesc icon extra text = do
   H.span ! A.class_ extra $
     H.i ! A.class_ icon $ ""
   (if isBig then H.h5 else H.h6) ! A.class_ text $
