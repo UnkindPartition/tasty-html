@@ -60,13 +60,11 @@ instance Monoid Summary where
 
 
 --------------------------------------------------------------------------------
-{-|
-
-  To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
-  passing 'htmlRunner' as one possible ingredient. This ingredient will run
-  tests if you pass the @--html@ command line option. For example,
-  @--html=results.html@ will run all the tests and generate @results.html@ as output.
-
+{-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
+    passing 'htmlRunner' as one possible ingredient. This ingredient will run
+    tests if you pass the @--html@ command line option. For example,
+    @--html=results.html@ will run all the tests and generate @results.html@ as
+    output.
 -}
 htmlRunner :: Ingredient
 htmlRunner = TestReporter optionDescription runner
@@ -83,7 +81,8 @@ htmlRunner = TestReporter optionDescription runner
 
           summary <- lift $ atomically $ do
             status <- readTVar $
-              fromMaybe (error "Attempted to lookup test by index outside bounds") $
+              fromMaybe (error "Attempted to lookup test by \
+                               \index outside bounds") $
               IntMap.lookup ix statusMap
 
             let leave = branch testName False
@@ -111,7 +110,8 @@ htmlRunner = TestReporter optionDescription runner
               Done result
                 | Tasty.resultSuccessful result -> pure $
                     mkSuccess $ Tasty.resultDescription result
-                | otherwise -> pure $ mkFailure $ Tasty.resultDescription result
+                | otherwise ->
+                    pure $ mkFailure $ Tasty.resultDescription result
               -- Otherwise the test has either not been started or is currently
               -- executing
               _ -> retry
@@ -144,12 +144,13 @@ htmlRunner = TestReporter optionDescription runner
 
         return $ getSum (summaryFailures summary) == 0
 
--- | Generates the final HTML report
-generateHtml :: Summary  -- ^ Test summary
-             -> Int      -- ^ Number of tests
-             -> FilePath -- ^ Where to write
+-- | Generates the final HTML report.
+generateHtml :: Summary  -- ^ Test summary.
+             -> Int      -- ^ Number of tests.
+             -> FilePath -- ^ Where to write.
              -> IO ()
 generateHtml summary tests path = do
+      -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
       includeScript = getRead >=> \bs ->
@@ -206,19 +207,26 @@ item :: Markup -> Markup
 item = H.li ! A.class_ "parent_li"
             ! H.customAttribute "role" "treeitem"
 
-type CssDescription = Maybe (String, AttributeValue)
+type MaybeCssDescription = Maybe (String, AttributeValue)
 type CssIcon  = AttributeValue
 type CssExtra = AttributeValue
 type CssText  = AttributeValue
 
--- | Helper function to generate an HTML tag corresponding to a either a node
--- or a leave in the tree.
-branch :: String         -- ^ Name of the branch.
-       -> Bool           -- ^ Whether the text will be big or not.
-       -> CssDescription -- ^ Description to add to the branch if applicable.
-       -> CssIcon        -- ^ CSS corresponding to the icon for the branch.
-       -> CssExtra       -- ^ Extra CSS classes for the branch.
-       -> CssText        -- ^ CSS class for text inside the branch.
+{-| Helper function to generate an HTML tag corresponding to a either a node or
+    a leave in a @bootstrap-tree* HTML tree.
+-}
+branch :: String
+       -- ^ Name of the branch.
+       -> Bool
+       -- ^ Whether the text will be big or not.
+       -> MaybeCssDescription
+       -- ^ Description to add to the branch if applicable.
+       -> CssIcon
+       -- ^ CSS corresponding to the icon for the branch.
+       -> CssExtra
+       -- ^ Extra CSS classes for the branch.
+       -> CssText
+       -- ^ CSS class for text inside the branch.
        -> Markup
 branch name_ isBig mdesc icon extra text = do
   H.span ! A.class_ extra $
@@ -229,3 +237,5 @@ branch name_ isBig mdesc icon extra text = do
     unless (null desc) $ do
       H.br
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+
+-- vim: textwidth=79 shiftwidth=2
