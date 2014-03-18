@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK ignore-exports #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -40,6 +41,8 @@ import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 
 import Paths_tasty_html (getDataFileName)
+
+-- * Exported
 
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
