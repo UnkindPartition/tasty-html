@@ -69,15 +69,19 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
 
 -- ** Types
 
-newtype HtmlPath = HtmlPath FilePath
-  deriving (Typeable)
+-- | Type wrapper to facilitate generic deriving of 'Summary' as a 'Monoid'.
+newtype HtmlPath = HtmlPath FilePath deriving (Typeable)
 
+-- | HTML 'Option' for the HTML 'Ingredient'.
 instance IsOption (Maybe HtmlPath) where
   defaultValue = Nothing
   parseValue = Just . Just . HtmlPath
   optionName = Tagged "html"
-  optionHelp = Tagged "A file path to store the test results in Html"
+  optionHelp = Tagged "A file path to store the test results in HTML"
 
+{-| Includes the number of successful and failed tests and the 'Markup' to
+    render the results of a test run.
+-}
 data Summary = Summary { summaryFailures :: Sum Int
                        , summarySuccesses :: Sum Int
                        , htmlRenderer :: Markup
@@ -87,9 +91,10 @@ instance Monoid Summary where
   mempty = memptydefault
   mappend = mappenddefault
 
--- Represents a Traverals of a Summary and a test count.
+-- | Represents a 'Traversal' of a 'Summary' and a test count.
 type SummaryTraversal = Traversal (Compose (StateT Int IO) (Const Summary))
 
+-- | A map of statuses for concurrently running tests.
 type StatusMap = IntMap (TVar Status)
 
 -- ** Test folding
