@@ -9,7 +9,8 @@ module Test.Tasty.Runners.Html (htmlRunner) where
 import Control.Applicative (Const(..), (<$), pure)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
-import Control.Concurrent.STM (TVar, atomically, readTVar, retry)
+import Control.Concurrent.STM (TVar, atomically, readTVar)
+import qualified Control.Concurrent.STM as STM(retry)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
 import Data.Foldable (forM_)
@@ -134,7 +135,7 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
             pure $ mkFailure $ Tasty.resultDescription result
       -- Otherwise the test has either not been started or is currently
       -- executing
-      _ -> retry
+      _ -> STM.retry
 
   Const summary <$ State.modify (+1)
 
