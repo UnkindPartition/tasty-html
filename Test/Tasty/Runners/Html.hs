@@ -47,23 +47,22 @@ import Paths_tasty_html (getDataFileName)
     output.
 -}
 htmlRunner :: Ingredient
-htmlRunner = TestReporter optionDescription runner
+htmlRunner = TestReporter optionDescription $ \options testTree -> do
+  HtmlPath path <- lookupOption options
+  return $ \statusMap -> do
+    (Const summary, tests) <- flip runStateT 0 $ getCompose $ getTraversal $
+      Tasty.foldTestTree
+        Tasty.trivialFold { Tasty.foldSingle = runTest statusMap
+                          , Tasty.foldGroup  = runGroup
+                          }
+        options
+        testTree
+
+    generateHtml summary tests path
+
+    return $ getSum (summaryFailures summary) == 0
  where
   optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath)) ]
-  runner options testTree = do
-    HtmlPath path <- lookupOption options
-    return $ \statusMap -> do
-      (Const summary, tests) <- flip runStateT 0 $ getCompose $ getTraversal $
-        Tasty.foldTestTree
-          Tasty.trivialFold { Tasty.foldSingle = runTest statusMap
-                            , Tasty.foldGroup  = runGroup
-                            }
-          options
-          testTree
-
-      generateHtml summary tests path
-
-      return $ getSum (summaryFailures summary) == 0
 
 -- * Internal
 
