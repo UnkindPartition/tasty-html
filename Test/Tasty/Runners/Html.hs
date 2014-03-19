@@ -5,7 +5,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Run a 'Tasty.TestTree' and produce an HTML file summarising the test results.
-module Test.Tasty.Runners.Html (htmlRunner) where
+module Test.Tasty.Runners.Html
+  ( HtmlPath(..)
+  , htmlRunner
+  ) where
 
 import Control.Applicative (Const(..), (<$), pure)
 import Control.Monad ((>=>), unless)
@@ -44,6 +47,16 @@ import Paths_tasty_html (getDataFileName)
 
 -- * Exported
 
+-- | Path where the HTML will be rendered.
+newtype HtmlPath = HtmlPath FilePath deriving (Typeable)
+
+-- | HTML 'Option' for the HTML 'Ingredient'.
+instance IsOption (Maybe HtmlPath) where
+  defaultValue = Nothing
+  parseValue = Just . Just . HtmlPath
+  optionName = Tagged "html"
+  optionHelp = Tagged "A file path to store the test results in HTML"
+
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
     tests if you pass the @--html@ command line option. For example,
@@ -71,17 +84,7 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
 -- * Internal
 
 -- ** Types
-
--- | Type wrapper to facilitate generic deriving of 'Summary' as a 'Monoid'.
-newtype HtmlPath = HtmlPath FilePath deriving (Typeable)
-
--- | HTML 'Option' for the HTML 'Ingredient'.
-instance IsOption (Maybe HtmlPath) where
-  defaultValue = Nothing
-  parseValue = Just . Just . HtmlPath
-  optionName = Tagged "html"
-  optionHelp = Tagged "A file path to store the test results in HTML"
-
+--
 {-| Includes the number of successful and failed tests and the 'Markup' to
     render the results of a test run.
 -}
