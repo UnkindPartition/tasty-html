@@ -19,7 +19,7 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
-import Control.Monad.State (StateT, runStateT)
+import Control.Monad.State (StateT, evalStateT)
 import qualified Control.Monad.State as State (get, modify)
 import Data.Functor.Compose (Compose(Compose,getCompose))
 import qualified Data.IntMap as IntMap
@@ -54,7 +54,7 @@ htmlRunner :: Ingredient
 htmlRunner = TestReporter optionDescription $ \options testTree -> do
   HtmlPath path <- lookupOption options
   return $ \statusMap -> do
-    (Const summary, tests) <- flip runStateT 0 $ getCompose $ getTraversal $
+    Const summary <- flip evalStateT 0 $ getCompose $ getTraversal $
       Tasty.foldTestTree
         Tasty.trivialFold { Tasty.foldSingle = runTest statusMap
                           , Tasty.foldGroup  = runGroup
@@ -62,7 +62,7 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
         options
         testTree
 
-    generateHtml summary tests path
+    generateHtml summary path
 
     return $ getSum (summaryFailures summary) == 0
  where
@@ -165,10 +165,9 @@ runGroup groupName children = Traversal $ Compose $ do
 
 -- | Generates the final HTML report.
 generateHtml :: Summary  -- ^ Test summary.
-             -> Int      -- ^ Number of tests.
              -> FilePath -- ^ Where to write.
              -> IO ()
-generateHtml summary tests path = do
+generateHtml summary path = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
@@ -214,6 +213,9 @@ generateHtml summary tests path = do
             H.div ! A.class_ "row" $
               H.div ! A.class_ "tree well" $
                 H.toMarkup $ treeMarkup $ htmlRenderer summary
+ where
+  -- Total number of tests
+  tests = getSum $ summaryFailures summary <> summarySuccesses summary
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
