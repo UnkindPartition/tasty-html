@@ -10,7 +10,7 @@ module Test.Tasty.Runners.Html (htmlRunner) where
 import Control.Applicative (Const(..), (<$), pure)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
-import Control.Concurrent.STM (TVar, atomically, readTVar)
+import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
@@ -22,7 +22,6 @@ import qualified Data.ByteString as B
 import Control.Monad.State (StateT, runStateT)
 import qualified Control.Monad.State as State (get, modify)
 import Data.Functor.Compose (Compose(Compose,getCompose))
-import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.Proxy (Proxy(..))
 import Data.Tagged (Tagged(..))
@@ -30,6 +29,7 @@ import Generics.Deriving.Monoid (memptydefault, mappenddefault)
 import Test.Tasty.Runners
   ( Ingredient(TestReporter)
   , Status(Done)
+  , StatusMap
   , Traversal(Traversal,getTraversal)
   )
 import Test.Tasty.Providers (IsTest, TestName)
@@ -96,9 +96,6 @@ instance Monoid Summary where
 
 -- | Represents a 'Traversal' of a 'Summary' and a test count.
 type SummaryTraversal = Traversal (Compose (StateT Int IO) (Const Summary))
-
--- | A map of statuses for concurrently running tests.
-type StatusMap = IntMap (TVar Status)
 
 -- ** Test folding
 
