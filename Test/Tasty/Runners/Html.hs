@@ -113,34 +113,13 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
       fromMaybe (error "Attempted to lookup test by index outside bounds") $
       IntMap.lookup ix statusMap
 
-    let testItemMarkup = branchMarkup testName False
-
-        mkSummary contents =
-          mempty { htmlRenderer = itemMarkup contents }
-
-        mkSuccess desc =
-          ( mkSummary $ testItemMarkup
-              (Just (desc, "muted"))
-              "icon-ok-sign"
-              "badge badge-success"
-              "text-success"
-          ) { summarySuccesses = Sum 1 }
-
-        mkFailure desc =
-          ( mkSummary $ testItemMarkup
-              (Just (desc, "text-error"))
-              "icon-remove-sign"
-              "badge badge-important"
-              "text-error"
-          ) { summaryFailures = Sum 1 }
-
     case status of
       -- If the test is done, generate HTML for it
       Done result
         | Tasty.resultSuccessful result -> pure $
-            mkSuccess $ Tasty.resultDescription result
+            mkSuccess testName $ Tasty.resultDescription result
         | otherwise ->
-            pure $ mkFailure $ Tasty.resultDescription result
+            pure $ mkFailure testName $ Tasty.resultDescription result
       -- Otherwise the test has either not been started or is currently
       -- executing
       _ -> STM.retry
@@ -152,14 +131,10 @@ runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
 runGroup groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
-  let testGroupMarkup = branchMarkup groupName
-                                      True
-                                      Nothing
-                                      "icon-folder-open"
-      grouped = itemMarkup $ do
+  let grouped = itemMarkup $ do
         if summaryFailures soFar > Sum 0
-          then testGroupMarkup "badge badge-important" "text-error"
-          else testGroupMarkup "badge badge-success" "text-success"
+          then testGroupMarkup groupName "badge badge-important" "text-error"
+          else testGroupMarkup groupName "badge badge-success" "text-success"
         treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
@@ -220,6 +195,36 @@ generateHtml summary path = do
   -- Total number of tests
   tests = getSum $ summaryFailures summary <> summarySuccesses summary
 
+-- | Set the 'htmlRenderer' of a 'Summary' with the given 'Markup'.
+mkSummary :: Markup -> Summary
+mkSummary contents = mempty { htmlRenderer = itemMarkup contents }
+
+-- | Create an HTML 'Summary' with a test success.
+mkSuccess :: TestName
+          -> String -- ^ Description for the test.
+          -> Summary
+mkSuccess testName desc =
+      ( mkSummary $ testItemMarkup
+          testName
+          (Just (desc, "muted"))
+          "icon-ok-sign"
+          "badge badge-success"
+          "text-success"
+      ) { summarySuccesses = Sum 1 }
+
+-- | Create an HTML 'Summary' with a test failure.
+mkFailure :: TestName
+          -> String -- ^ Description for the test.
+          -> Summary
+mkFailure testName desc = undefined
+      ( mkSummary $ testItemMarkup
+          testName
+          (Just (desc, "text-error"))
+          "icon-remove-sign"
+          "badge badge-important"
+          "text-error"
+      ) { summaryFailures = Sum 1 }
+
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
 treeMarkup  = H.ul ! H.customAttribute "role" "tree"
@@ -227,7 +232,7 @@ treeMarkup  = H.ul ! H.customAttribute "role" "tree"
 -- | Create a @bootstrap-tree@ HTML /treeitem/
 itemMarkup :: Markup -> Markup
 itemMarkup = H.li ! A.class_ "parent_li"
-            ! H.customAttribute "role" "treeitem"
+                  ! H.customAttribute "role" "treeitem"
 
 type MaybeCssDescription = Maybe (String, AttributeValue)
 type CssIcon  = AttributeValue
@@ -259,5 +264,19 @@ branchMarkup name_ isBig mdesc icon extra text = do
     unless (null desc) $ do
       H.br
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+
+-- | Markup generator for a test item.
+testItemMarkup :: TestName
+               -> MaybeCssDescription
+               -> CssIcon
+               -> CssExtra
+               -> CssText
+               -> Markup
+testItemMarkup testName = branchMarkup testName False
+
+-- | Markup generator for a test group.
+testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup
+testGroupMarkup groupName =
+  branchMarkup groupName True Nothing "icon-folder-open"
 
 -- vim: textwidth=79 shiftwidth=2
