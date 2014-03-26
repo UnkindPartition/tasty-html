@@ -96,7 +96,7 @@ instance Monoid Summary where
   mempty = memptydefault
   mappend = mappenddefault
 
--- | Represents a 'Traversal' of a 'Summary' and a test count.
+-- | A 'Traversal' composed of a 'Summary' and a test count.
 type SummaryTraversal = Traversal (Compose (StateT Int IO) (Const Summary))
 
 -- ** Test folding
@@ -125,15 +125,16 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
 
   Const summary <$ State.modify (+1)
 
--- | To be used for a 'TestGroup' when when folding the final 'TestTree'.
+-- | To be used for a 'TestGroup' when folding the final 'TestTree'.
 runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
 runGroup groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
-  let grouped = itemMarkup $ do
+  let render = testGroupMarkup groupName
+      grouped = itemMarkup $ do
         if summaryFailures soFar > Sum 0
-          then testGroupMarkup groupName "badge badge-important" "text-error"
-          else testGroupMarkup groupName "badge badge-success" "text-success"
+          then render "badge badge-important" "text-error"
+          else render "badge badge-success"   "text-success"
         treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
@@ -148,6 +149,7 @@ generateHtml summary path = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
+      -- blaze-html 'script' doesn't admit HTML inside
       includeScript = getRead >=> \bs ->
         return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
