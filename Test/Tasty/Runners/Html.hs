@@ -1,4 +1,3 @@
-{-# OPTIONS_HADDOCK ignore-exports #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
