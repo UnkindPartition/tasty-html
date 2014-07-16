@@ -217,7 +217,7 @@ mkSuccess testName desc =
 mkFailure :: TestName
           -> String -- ^ Description for the test.
           -> Summary
-mkFailure testName desc = undefined
+mkFailure testName desc =
       ( mkSummary $ testItemMarkup
           testName
           (Just (desc, "text-error"))
