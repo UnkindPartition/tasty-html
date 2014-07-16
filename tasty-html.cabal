@@ -1,5 +1,5 @@
 name:                tasty-html
-version:             0.1
+version:             0.2
 synopsis:            Render tasty output to HTML
 description:         A tasty ingredient to output test results in HTML5.
 license:             MIT
@@ -9,7 +9,7 @@ maintainer:          j@dannyavarro.net, roma@ro-che.info
 homepage:            http://github.com/feuerbach/tasty-html
 category:            Testing
 build-type:          Simple
--- extra-source-files:  CHANGELOG
+extra-source-files:  README.md, CHANGELOG.md
 cabal-version:       >=1.10
 
 data-files:
