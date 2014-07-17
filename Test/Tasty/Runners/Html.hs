@@ -153,10 +153,10 @@ generateHtml summary path = do
       includeScript = getRead >=> \bs ->
         return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
-  bootStrapCSS  <- includeMarkup "data/bootstrap-combined.min.css"
-  customCSS     <- includeMarkup "data/style.css"
-  jquery        <- includeScript "data/jquery-2.1.0.min.js"
-  bootstrapTree <- includeScript "data/bootstrap-tree.js"
+  bootStrapCSS  <- includeMarkup "bootstrap/dist/css/bootstrap.min.css"
+  -- customCSS     <- includeMarkup "data/style.css"
+  -- jquery        <- includeScript "data/jquery-2.1.0.min.js"
+  -- bootstrapTree <- includeScript "data/bootstrap-tree.js"
 
   TIO.writeFile path $
     renderHtml $
@@ -167,9 +167,9 @@ generateHtml summary path = do
           H.meta ! A.name "viewport"
                  ! A.content "width=device-width, initial-scale=1.0"
           H.style bootStrapCSS
-          H.style customCSS
-          jquery
-          bootstrapTree
+          -- H.style customCSS
+          -- jquery
+          -- bootstrapTree
 
         H.body $ H.div ! A.class_ "container" $ do
           H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
@@ -278,6 +278,6 @@ testItemMarkup testName = branchMarkup testName False
 -- | Markup generator for a test group.
 testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup
 testGroupMarkup groupName =
-  branchMarkup groupName True Nothing "icon-folder-open"
+  branchMarkup groupName True Nothing "glyphicon glyphicon-folder-open"
 
 -- vim: textwidth=79 shiftwidth=2

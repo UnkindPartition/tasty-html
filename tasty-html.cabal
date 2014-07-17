@@ -13,10 +13,7 @@ extra-source-files:  README.md, CHANGELOG.md
 cabal-version:       >=1.10
 
 data-files:
-  data/bootstrap-combined.min.css
-  data/style.css
-  data/jquery-2.1.0.min.js
-  data/bootstrap-tree.js
+     bootstrap/dist/css/bootstrap.min.css
 
 source-repository head
   type: git
