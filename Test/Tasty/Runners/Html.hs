@@ -160,7 +160,7 @@ generateHtml summary path = do
 
   TIO.writeFile path $
     renderHtml $
-      H.docTypeHtml ! A.lang "en" $
+      H.docTypeHtml ! A.lang "en" $ do
         H.head $ do
           H.meta ! A.charset "utf-8"
           H.title "Tasty Test Results"
@@ -171,27 +171,27 @@ generateHtml summary path = do
           jquery
           bootstrapTree
 
-          H.body $ H.div ! A.class_ "container" $ do
-            H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
-            H.div ! A.class_ "row" $
-              if summaryFailures summary > Sum 0
-                then
-                  H.div ! A.class_ "alert alert-block alert-error" $
-                    H.p ! A.class_ "lead text-center" $ do
-                      H.toMarkup . getSum $ summaryFailures summary
-                      " out of " :: Markup
-                      H.toMarkup tests
-                      " tests failed"
-                else
-                  H.div ! A.class_ "alert alert-block alert-success" $
-                    H.p ! A.class_ "lead text-center" $ do
-                      "All " :: Markup
-                      H.toMarkup tests
-                      " tests passed"
+        H.body $ H.div ! A.class_ "container" $ do
+          H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
+          H.div ! A.class_ "row" $
+            if summaryFailures summary > Sum 0
+              then
+                H.div ! A.class_ "alert alert-block alert-error" $
+                  H.p ! A.class_ "lead text-center" $ do
+                    H.toMarkup . getSum $ summaryFailures summary
+                    " out of " :: Markup
+                    H.toMarkup tests
+                    " tests failed"
+              else
+                H.div ! A.class_ "alert alert-block alert-success" $
+                  H.p ! A.class_ "lead text-center" $ do
+                    "All " :: Markup
+                    H.toMarkup tests
+                    " tests passed"
 
-            H.div ! A.class_ "row" $
-              H.div ! A.class_ "tree well" $
-                H.toMarkup $ treeMarkup $ htmlRenderer summary
+          H.div ! A.class_ "row" $
+            H.div ! A.class_ "tree well" $
+              H.toMarkup $ treeMarkup $ htmlRenderer summary
  where
   -- Total number of tests
   tests = getSum $ summaryFailures summary <> summarySuccesses summary
