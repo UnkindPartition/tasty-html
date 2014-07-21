@@ -1,0 +1,3 @@
+:set -package tasty-hunit
+:set -package tasty-smallcheck
+:set -package tasty-quickcheck
