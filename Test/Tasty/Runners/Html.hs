@@ -133,8 +133,8 @@ runGroup groupName children = Traversal $ Compose $ do
   let render = testGroupMarkup groupName
       grouped = itemMarkup $ do
         if summaryFailures soFar > Sum 0
-          then render "badge badge-important" "text-error"
-          else render "badge badge-success"   "text-success"
+          then render "label label-danger" "text-danger"
+          else render "label label-success"   "text-success"
         treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
@@ -209,7 +209,7 @@ mkSuccess testName desc =
           testName
           (Just (desc, "muted"))
           "icon-ok-sign"
-          "badge badge-success"
+          "label label-success"
           "text-success"
       ) { summarySuccesses = Sum 1 }
 
@@ -220,10 +220,10 @@ mkFailure :: TestName
 mkFailure testName desc =
       ( mkSummary $ testItemMarkup
           testName
-          (Just (desc, "text-error"))
+          (Just (desc, "text-danger"))
           "icon-remove-sign"
-          "badge badge-important"
-          "text-error"
+          "label label-danger"
+          "text-danger"
       ) { summaryFailures = Sum 1 }
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
