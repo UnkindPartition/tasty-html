@@ -208,7 +208,7 @@ mkSuccess testName desc =
       ( mkSummary $ testItemMarkup
           testName
           (Just (desc, "muted"))
-          "icon-ok-sign"
+          "glyphicon glyphicon-ok-sign"
           "label label-success"
           "text-success"
       ) { summarySuccesses = Sum 1 }
@@ -221,7 +221,7 @@ mkFailure testName desc =
       ( mkSummary $ testItemMarkup
           testName
           (Just (desc, "text-danger"))
-          "icon-remove-sign"
+          "glyphicon glyphicon-remove-sign"
           "label label-danger"
           "text-danger"
       ) { summaryFailures = Sum 1 }
