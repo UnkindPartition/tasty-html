@@ -256,13 +256,12 @@ branchMarkup :: String
        -- ^ CSS class for text inside the branch.
        -> Markup
 branchMarkup name_ isBig mdesc icon extra text = do
-  H.span ! A.class_ extra $
-    H.i ! A.class_ icon $ ""
-  (if isBig then H.h5 else H.h6) ! A.class_ text $
+  (if isBig then H.h5 else H.h6) ! A.class_ text $ do
+    H.span ! A.class_ extra $ H.span ! A.class_ icon $ ""
     H.toMarkup $ "  " ++ name_
+
   forM_ mdesc $ \(desc,desca) ->
-    unless (null desc) $ do
-      H.br
+    unless (null desc) $
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
 
 -- | Markup generator for a test item.
