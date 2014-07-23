@@ -133,8 +133,8 @@ runGroup groupName children = Traversal $ Compose $ do
   let render = testGroupMarkup groupName
       grouped = itemMarkup $ do
         if summaryFailures soFar > Sum 0
-          then render "label label-danger" "text-danger"
-          else render "label label-success"   "text-success"
+          then render "label label-danger"  "text-danger"
+          else render "label label-success" "text-success"
         treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
@@ -190,7 +190,7 @@ generateHtml summary path = do
                     " tests passed"
 
           H.div ! A.class_ "row" $
-            H.div ! A.class_ "tree well" $
+            H.div ! A.class_ "well" $
               H.toMarkup $ treeMarkup $ htmlRenderer summary
  where
   -- Total number of tests
@@ -228,12 +228,11 @@ mkFailure testName desc =
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
-treeMarkup  = H.ul ! H.customAttribute "role" "tree"
+treeMarkup  = H.ul
 
 -- | Create a @bootstrap-tree@ HTML /treeitem/
 itemMarkup :: Markup -> Markup
-itemMarkup = H.li ! A.class_ "parent_li"
-                  ! H.customAttribute "role" "treeitem"
+itemMarkup = H.li
 
 type MaybeCssDescription = Maybe (String, AttributeValue)
 type CssIcon  = AttributeValue
