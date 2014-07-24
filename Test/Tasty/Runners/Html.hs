@@ -228,7 +228,7 @@ mkFailure testName desc =
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
-treeMarkup  = H.ul
+treeMarkup  = H.ul ! A.class_ "list-unstyled"
 
 -- | Create a @bootstrap-tree@ HTML /treeitem/
 itemMarkup :: Markup -> Markup
