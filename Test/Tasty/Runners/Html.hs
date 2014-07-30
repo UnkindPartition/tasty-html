@@ -176,14 +176,14 @@ generateHtml summary path = do
           H.div ! A.class_ "row" $
             if summaryFailures summary > Sum 0
               then
-                H.div ! A.class_ "alert alert-block alert-error" $
+                H.div ! A.class_ "alert alert-danger" $
                   H.p ! A.class_ "lead text-center" $ do
                     H.toMarkup . getSum $ summaryFailures summary
                     " out of " :: Markup
                     H.toMarkup tests
                     " tests failed"
               else
-                H.div ! A.class_ "alert alert-block alert-success" $
+                H.div ! A.class_ "alert alert-success" $
                   H.p ! A.class_ "lead text-center" $ do
                     "All " :: Markup
                     H.toMarkup tests
