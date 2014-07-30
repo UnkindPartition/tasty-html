@@ -154,22 +154,16 @@ generateHtml summary path = do
         return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
   bootStrapCSS  <- includeMarkup "bootstrap/dist/css/bootstrap.min.css"
-  -- customCSS     <- includeMarkup "data/style.css"
-  -- jquery        <- includeScript "data/jquery-2.1.0.min.js"
-  -- bootstrapTree <- includeScript "data/bootstrap-tree.js"
 
   TIO.writeFile path $
     renderHtml $
       H.docTypeHtml ! A.lang "en" $ do
         H.head $ do
           H.meta ! A.charset "utf-8"
-          H.title "Tasty Test Results"
           H.meta ! A.name "viewport"
                  ! A.content "width=device-width, initial-scale=1.0"
+          H.title "Tasty Test Results"
           H.style bootStrapCSS
-          -- H.style customCSS
-          -- jquery
-          -- bootstrapTree
 
         H.body $ H.div ! A.class_ "container" $ do
           H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
