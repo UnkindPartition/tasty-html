@@ -201,7 +201,7 @@ mkSuccess :: TestName
 mkSuccess testName desc =
       ( mkSummary $ testItemMarkup
           testName
-          (Just (desc, "muted"))
+          (Just (desc, "text-muted"))
           "glyphicon glyphicon-ok-sign"
           "label label-success"
           "text-success"
