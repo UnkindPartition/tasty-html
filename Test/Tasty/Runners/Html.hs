@@ -138,8 +138,7 @@ runGroup groupName children = Traversal $ Compose $ do
                              , "text-success media-heading"
                              )
       grouped = testGroupMarkup groupName extra text $
-                  H.div ! A.class_ "media" $
-                    treeMarkup $ htmlRenderer soFar
+                  treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
 
@@ -223,7 +222,9 @@ mkFailure testName desc =
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
-treeMarkup  = H.ul ! A.class_ "media-list"
+treeMarkup rest = H.div ! A.class_ "media" $
+                    H.ul ! A.class_ "media-list" $
+                      rest
 
 -- | Create a @bootstrap-tree@ HTML /treeitem/
 itemMarkup :: Markup -> Markup
