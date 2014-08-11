@@ -130,12 +130,16 @@ runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
 runGroup groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
-  let render = testGroupMarkup groupName
-      grouped = itemMarkup $ do
-        if summaryFailures soFar > Sum 0
-          then render "btn btn-danger btn-xs media-object"  "text-danger media-heading"
-          else render "btn btn-success btn-xs media-object" "text-success media-heading"
-        treeMarkup $ htmlRenderer soFar
+  let (extra,text) = if summaryFailures soFar > Sum 0
+                        then ( "btn btn-danger btn-xs media-object"
+                             , "text-danger media-heading"
+                             )
+                        else ( "btn btn-success btn-xs media-object"
+                             , "text-success media-heading"
+                             )
+      grouped = testGroupMarkup groupName extra text $
+                  H.div ! A.class_ "media" $
+                    treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
 
@@ -230,32 +234,6 @@ type CssIcon  = AttributeValue
 type CssExtra = AttributeValue
 type CssText  = AttributeValue
 
-{-| Helper function to generate an HTML tag corresponding to a either a node or
-    a leave in a @bootstrap-tree* HTML tree.
--}
-branchMarkup :: String
-       -- ^ Name of the branch.
-       -> Bool
-       -- ^ Whether the text will be big or not.
-       -> MaybeCssDescription
-       -- ^ Description to add to the branch if applicable.
-       -> CssIcon
-       -- ^ CSS corresponding to the icon for the branch.
-       -> CssExtra
-       -- ^ Extra CSS classes for the branch.
-       -> CssText
-       -- ^ CSS class for text inside the branch.
-       -> Markup
-branchMarkup name_ isBig mdesc icon extra text = do
-  H.a ! A.class_ "pull-left" ! A.href "#" $ buttonMarkup extra icon
-  H.div ! A.class_ "media-body" $ do
-    (if isBig then H.h5 else H.h6) ! A.class_ text $
-      H.toMarkup $ "  " ++ name_
-
-    forM_ mdesc $ \(desc,desca) ->
-      unless (null desc) $
-        H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
-
 buttonMarkup :: CssExtra -> CssIcon -> Markup
 buttonMarkup extra icon = H.button ! H.customAttribute "type" "button"
                                    ! A.class_ extra
@@ -268,11 +246,24 @@ testItemMarkup :: TestName
                -> CssExtra
                -> CssText
                -> Markup
-testItemMarkup testName = branchMarkup testName False
+testItemMarkup testName mdesc icon extra text = do
+  H.a ! A.class_ "pull-left" ! A.href "#" $ buttonMarkup extra icon
+  H.div ! A.class_ "media-body" $ do
+    H.h5 ! A.class_ text $
+      H.toMarkup $ "  " ++ testName
+
+    forM_ mdesc $ \(desc,desca) ->
+      unless (null desc) $
+        H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
 
 -- | Markup generator for a test group.
-testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup
-testGroupMarkup groupName =
-  branchMarkup groupName True Nothing "glyphicon glyphicon-folder-open"
+testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
+testGroupMarkup groupName extra text body =
+    H.li ! A.class_ "media" $ do
+      H.a ! A.class_ "pull-left" ! A.href "#" $
+        buttonMarkup extra "glyphicon glyphicon-folder-open"
+      H.div ! A.class_ "media-body" $ do
+        H.h4 ! A.class_ text $ H.toMarkup $ "  " ++ groupName
+        body
 
 -- vim: textwidth=79 shiftwidth=2
