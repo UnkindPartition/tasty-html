@@ -16,7 +16,6 @@ import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
-import Data.Foldable (forM_)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import qualified Data.Text.Lazy.IO as TIO
@@ -201,7 +200,7 @@ mkSuccess :: TestName
 mkSuccess testName desc =
       ( mkSummary $ testItemMarkup
           testName
-          (Just (desc, "text-muted"))
+          (desc, "text-muted")
           "glyphicon-ok-sign"
           "btn-success"
           "text-success"
@@ -214,7 +213,7 @@ mkFailure :: TestName
 mkFailure testName desc =
       ( mkSummary $ testItemMarkup
           testName
-          (Just (desc, "text-danger"))
+          (desc, "text-danger")
           "glyphicon-remove-sign"
           "btn-danger"
           "text-danger"
@@ -230,7 +229,7 @@ treeMarkup rest = H.div ! A.class_ "media" $
 itemMarkup :: Markup -> Markup
 itemMarkup = H.li ! A.class_ "media"
 
-type MaybeCssDescription = Maybe (String, AttributeValue)
+type CssDescription = (String, AttributeValue)
 type CssIcon  = AttributeValue
 type CssExtra = AttributeValue
 type CssText  = AttributeValue
@@ -243,20 +242,19 @@ buttonMarkup extra icon =
 
 -- | Markup generator for a test item.
 testItemMarkup :: TestName
-               -> MaybeCssDescription
+               -> CssDescription
                -> CssIcon
                -> CssExtra
                -> CssText
                -> Markup
-testItemMarkup testName mdesc icon extra text = do
+testItemMarkup testName (desc,desca) icon extra text = do
   H.a ! A.class_ "pull-left" ! A.href "#" $ buttonMarkup extra icon
   H.div ! A.class_ "media-body" $ do
     H.h5 ! A.class_ ("media-heading " <> text) $
       H.toMarkup $ "  " ++ testName
 
-    forM_ mdesc $ \(desc,desca) ->
-      unless (null desc) $
-        H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+    unless (null desc) $
+      H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
 
 -- | Markup generator for a test group.
 testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
