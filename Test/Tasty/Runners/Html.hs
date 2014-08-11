@@ -133,8 +133,8 @@ runGroup groupName children = Traversal $ Compose $ do
   let render = testGroupMarkup groupName
       grouped = itemMarkup $ do
         if summaryFailures soFar > Sum 0
-          then render "label label-danger"  "text-danger"
-          else render "label label-success" "text-success"
+          then render "btn btn-danger btn-xs media-object"  "text-danger media-heading"
+          else render "btn btn-success btn-xs media-object" "text-success media-heading"
         treeMarkup $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
@@ -149,9 +149,6 @@ generateHtml summary path = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
-      -- blaze-html 'script' doesn't admit HTML inside
-      includeScript = getRead >=> \bs ->
-        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
   bootStrapCSS  <- includeMarkup "bootstrap/dist/css/bootstrap.min.css"
 
@@ -203,8 +200,8 @@ mkSuccess testName desc =
           testName
           (Just (desc, "text-muted"))
           "glyphicon glyphicon-ok-sign"
-          "label label-success"
-          "text-success"
+          "btn btn-success btn-xs media-object"
+          "text-success media-heading"
       ) { summarySuccesses = Sum 1 }
 
 -- | Create an HTML 'Summary' with a test failure.
@@ -216,17 +213,17 @@ mkFailure testName desc =
           testName
           (Just (desc, "text-danger"))
           "glyphicon glyphicon-remove-sign"
-          "label label-danger"
-          "text-danger"
+          "btn btn-danger btn-xs media-object"
+          "text-danger media-heading"
       ) { summaryFailures = Sum 1 }
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
 treeMarkup :: Markup -> Markup
-treeMarkup  = H.ul ! A.class_ "list-unstyled"
+treeMarkup  = H.ul ! A.class_ "media-list"
 
 -- | Create a @bootstrap-tree@ HTML /treeitem/
 itemMarkup :: Markup -> Markup
-itemMarkup = H.li
+itemMarkup = H.li ! A.class_ "media"
 
 type MaybeCssDescription = Maybe (String, AttributeValue)
 type CssIcon  = AttributeValue
@@ -250,13 +247,19 @@ branchMarkup :: String
        -- ^ CSS class for text inside the branch.
        -> Markup
 branchMarkup name_ isBig mdesc icon extra text = do
-  (if isBig then H.h5 else H.h6) ! A.class_ text $ do
-    H.span ! A.class_ extra $ H.span ! A.class_ icon $ ""
-    H.toMarkup $ "  " ++ name_
+  H.a ! A.class_ "pull-left" ! A.href "#" $ buttonMarkup extra icon
+  H.div ! A.class_ "media-body" $ do
+    (if isBig then H.h5 else H.h6) ! A.class_ text $
+      H.toMarkup $ "  " ++ name_
 
-  forM_ mdesc $ \(desc,desca) ->
-    unless (null desc) $
-      H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+    forM_ mdesc $ \(desc,desca) ->
+      unless (null desc) $
+        H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+
+buttonMarkup :: CssExtra -> CssIcon -> Markup
+buttonMarkup extra icon = H.button ! H.customAttribute "type" "button"
+                                   ! A.class_ extra
+                                   $ H.span ! A.class_ icon $ ""
 
 -- | Markup generator for a test item.
 testItemMarkup :: TestName
