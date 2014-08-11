@@ -131,11 +131,11 @@ runGroup groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
   let (extra,text) = if summaryFailures soFar > Sum 0
-                        then ( "btn btn-danger btn-xs media-object"
-                             , "text-danger media-heading"
+                        then ( "btn-danger"
+                             , "text-danger"
                              )
-                        else ( "btn btn-success btn-xs media-object"
-                             , "text-success media-heading"
+                        else ( "btn-success"
+                             , "text-success"
                              )
       grouped = testGroupMarkup groupName extra text $
                   treeMarkup $ htmlRenderer soFar
@@ -202,9 +202,9 @@ mkSuccess testName desc =
       ( mkSummary $ testItemMarkup
           testName
           (Just (desc, "text-muted"))
-          "glyphicon glyphicon-ok-sign"
-          "btn btn-success btn-xs media-object"
-          "text-success media-heading"
+          "glyphicon-ok-sign"
+          "btn-success"
+          "text-success"
       ) { summarySuccesses = Sum 1 }
 
 -- | Create an HTML 'Summary' with a test failure.
@@ -215,9 +215,9 @@ mkFailure testName desc =
       ( mkSummary $ testItemMarkup
           testName
           (Just (desc, "text-danger"))
-          "glyphicon glyphicon-remove-sign"
-          "btn btn-danger btn-xs media-object"
-          "text-danger media-heading"
+          "glyphicon-remove-sign"
+          "btn-danger"
+          "text-danger"
       ) { summaryFailures = Sum 1 }
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
@@ -236,9 +236,10 @@ type CssExtra = AttributeValue
 type CssText  = AttributeValue
 
 buttonMarkup :: CssExtra -> CssIcon -> Markup
-buttonMarkup extra icon = H.button ! H.customAttribute "type" "button"
-                                   ! A.class_ extra
-                                   $ H.span ! A.class_ icon $ ""
+buttonMarkup extra icon =
+  H.button ! A.type_ "button"
+           ! A.class_ ("btn btn-xs media-object " <> extra)
+           $ H.span ! A.class_ ("glyphicon " <> icon) $ ""
 
 -- | Markup generator for a test item.
 testItemMarkup :: TestName
@@ -250,7 +251,7 @@ testItemMarkup :: TestName
 testItemMarkup testName mdesc icon extra text = do
   H.a ! A.class_ "pull-left" ! A.href "#" $ buttonMarkup extra icon
   H.div ! A.class_ "media-body" $ do
-    H.h5 ! A.class_ text $
+    H.h5 ! A.class_ ("media-heading " <> text) $
       H.toMarkup $ "  " ++ testName
 
     forM_ mdesc $ \(desc,desca) ->
@@ -262,9 +263,10 @@ testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
 testGroupMarkup groupName extra text body =
     H.li ! A.class_ "media" $ do
       H.a ! A.class_ "pull-left" ! A.href "#" $
-        buttonMarkup extra "glyphicon glyphicon-folder-open"
+        buttonMarkup extra "glyphicon-folder-open"
       H.div ! A.class_ "media-body" $ do
-        H.h4 ! A.class_ text $ H.toMarkup $ "  " ++ groupName
+        H.h4 ! A.class_ ("media-heading " <> text) $
+          H.toMarkup $ "  " ++ groupName
         body
 
 -- vim: textwidth=79 shiftwidth=2
