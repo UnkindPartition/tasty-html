@@ -152,7 +152,7 @@ generateHtml summary path = do
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
 
-  bootStrapCSS  <- includeMarkup "bootstrap/dist/css/bootstrap.min.css"
+  bootStrapCSS  <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
 
   TIO.writeFile path $
     renderHtml $

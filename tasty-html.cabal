@@ -13,7 +13,7 @@ extra-source-files:  README.md, CHANGELOG.md
 cabal-version:       >=1.10
 
 data-files:
-     bootstrap/dist/css/bootstrap.min.css
+     data/bootstrap/dist/css/bootstrap.min.css
 
 source-repository head
   type: git
