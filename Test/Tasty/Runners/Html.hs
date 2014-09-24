@@ -73,9 +73,11 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
         options
         testTree
 
-    generateHtml summary path
+    -- Ignore ellapsed time
+    return . const $ do
+      generateHtml summary path
+      return $ getSum (summaryFailures summary) == 0
 
-    return $ getSum (summaryFailures summary) == 0
  where
   optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath)) ]
 
