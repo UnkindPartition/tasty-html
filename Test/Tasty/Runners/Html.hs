@@ -154,7 +154,8 @@ generateHtml summary path = do
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
 
-  bootStrapCSS  <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
+  bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
+  bootStrapCssTheme <- includeMarkup "data/bootstrap/dist/css/bootstrap-theme.min.css"
 
   TIO.writeFile path $
     renderHtml $
@@ -164,7 +165,8 @@ generateHtml summary path = do
           H.meta ! A.name "viewport"
                  ! A.content "width=device-width, initial-scale=1.0"
           H.title "Tasty Test Results"
-          H.style bootStrapCSS
+          H.style bootStrapCss
+          H.style bootStrapCssTheme
 
         H.body $ H.div ! A.class_ "container" $ do
           H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
