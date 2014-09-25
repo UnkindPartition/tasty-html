@@ -153,9 +153,14 @@ generateHtml summary path = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
+      -- blaze-html 'script' doesn't admit HTML inside
+      includeScript = getRead >=> \bs ->
+        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
   bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
   bootStrapCssTheme <- includeMarkup "data/bootstrap/dist/css/bootstrap-theme.min.css"
+  jQueryJs          <- includeScript "data/jquery-2.1.1.min.js"
+  bootStrapJs       <- includeScript "data/bootstrap/dist/js/bootstrap.min.js"
 
   TIO.writeFile path $
     renderHtml $
@@ -167,6 +172,8 @@ generateHtml summary path = do
           H.title "Tasty Test Results"
           H.style bootStrapCss
           H.style bootStrapCssTheme
+          jQueryJs
+          bootStrapJs
 
         H.body $ H.div ! A.class_ "container" $ do
           H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
