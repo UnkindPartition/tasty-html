@@ -64,3 +64,33 @@ And here is the output of the above program rendered to HTML:
 
 (Note that whether QuickCheck finds a counterexample to the third property is
 determined by chance.)
+
+## Hacking
+
+When cloning this repository use `--recursive` parameter to checkout the git
+submodule pointing to the `bootstrap` fork being used by `tasty-html`.
+
+```
+$ git clone --recursive https://github.com/feuerbach/tasty-html
+```
+
+Making changes to the `bootstrap` fork is the same procedure followed by the
+[upstream project](https://github.com/twbs/bootstrap).
+
+```
+$ cd data/bootstrap
+$ npm install
+```
+
+You might change the style by editing the `less` files. Once you are done, use
+`grunt` to compile the `css` files:
+
+```
+$ grunt dist
+```
+
+This assumes you have `grunt-cli` installed globally, either with `npm` (`npm
+install -g grunt-cli`) or from a package manager if available.
+
+Consider submitting your changes as pull requests to the `tasty-html` bootstrap
+fork at https://github.com/jdnavarro/bootstrap.
