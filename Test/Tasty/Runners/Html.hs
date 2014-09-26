@@ -15,7 +15,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
-import Data.Maybe (isNothing, fromMaybe)
+import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
 import Data.Typeable (Typeable)
 import Data.Unique (newUnique, hashUnique)
@@ -38,7 +38,7 @@ import Test.Tasty.Runners
 import Test.Tasty.Providers (IsTest, TestName)
 import qualified Test.Tasty.Runners as Tasty
 import Test.Tasty.Options as Tasty
-import Text.Blaze.Html5 (Markup, AttributeValue, (!))
+import Text.Blaze.Html5 (Markup, Attribute, AttributeValue, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
@@ -251,19 +251,13 @@ type CssDescription = (String, AttributeValue)
 type CssIcon  = AttributeValue
 type CssExtra = AttributeValue
 type CssText  = AttributeValue
+type DataAttr = Attribute
 
-buttonMarkup :: Maybe TestName -> CssExtra -> CssIcon -> Markup
-buttonMarkup mtarget extra icon =
+buttonMarkup :: CssExtra -> CssIcon -> DataAttr -> Markup
+buttonMarkup extra icon dataAttr =
   H.button ! A.type_ "button"
            ! A.class_ ("btn btn-xs pull-left media-object " <> extra)
-           -- TODO: Could this be done in a single case expression?
-           ! (if isNothing mtarget
-              then mempty
-              else H.dataAttribute "toggle" "collapse"
-             )
-           ! case mtarget of
-                   Nothing -> mempty
-                   Just target -> H.dataAttribute "target" (H.toValue ('#' : target))
+           ! dataAttr
            $ H.span ! A.class_ ("glyphicon " <> icon) $ ""
 
 -- | Markup generator for a test item.
@@ -274,7 +268,7 @@ testItemMarkup :: TestName
                -> CssText
                -> Markup
 testItemMarkup testName (desc,desca) icon extra text = do
-  buttonMarkup Nothing extra icon
+  buttonMarkup extra icon mempty
   H.div ! A.class_ "media-body" $ do
     H.h5 ! A.class_ ("media-heading " <> text) $
       H.toMarkup $ "  " ++ testName
@@ -286,7 +280,9 @@ testItemMarkup testName (desc,desca) icon extra text = do
 testGroupMarkup :: String -> TestName -> CssExtra -> CssText -> Markup -> Markup
 testGroupMarkup uniq groupName extra text body =
     H.li ! A.class_ "media" $ do
-      buttonMarkup (Just uniq) extra "glyphicon-folder-open"
+      buttonMarkup extra "glyphicon-folder-open"
+        (H.dataAttribute "toggle" "collapse" <>
+         H.dataAttribute "target" (H.toValue $ '#' : uniq))
       H.div ! A.class_ "media-body" $ do
         H.h4 ! A.class_ ("media-heading " <> text) $
           H.toMarkup $ "  " ++ groupName
