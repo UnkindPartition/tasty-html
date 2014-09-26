@@ -9,14 +9,16 @@ module Test.Tasty.Runners.Html
   , htmlRunner
   ) where
 
-import Control.Applicative (Const(..), (<$), pure)
+import Control.Applicative (Const(..), (<$>), (<$), pure)
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
+import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (isNothing, fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
 import Data.Typeable (Typeable)
+import Data.Unique (newUnique, hashUnique)
 import GHC.Generics (Generic)
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
@@ -130,6 +132,8 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
 runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
 runGroup groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
+  -- TODO: Cleaner way to get unique ids
+  uniq <- (show . hashUnique) <$> liftIO newUnique
 
   let (extra,text) = if summaryFailures soFar > Sum 0
                         then ( "btn-danger"
@@ -138,8 +142,8 @@ runGroup groupName children = Traversal $ Compose $ do
                         else ( "btn-success"
                              , "text-success"
                              )
-      grouped = testGroupMarkup groupName extra text $
-                  treeMarkup $ htmlRenderer soFar
+      grouped = testGroupMarkup uniq groupName extra text $
+                  treeMarkup uniq $ htmlRenderer soFar
 
   pure $ Const soFar { htmlRenderer = grouped }
 
@@ -155,7 +159,7 @@ generateHtml summary path = do
       includeMarkup = getRead >=> return . H.unsafeByteString
       -- blaze-html 'script' doesn't admit HTML inside
       includeScript = getRead >=> \bs ->
-        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
+        return . H.unsafeByteString $ "<script \"type=text/javascript\">" <> bs <> "</script>"
 
   bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
   bootStrapCssTheme <- includeMarkup "data/bootstrap/dist/css/bootstrap-theme.min.css"
@@ -172,6 +176,7 @@ generateHtml summary path = do
           H.title "Tasty Test Results"
           H.style bootStrapCss
           H.style bootStrapCssTheme
+
           jQueryJs
           bootStrapJs
 
@@ -195,7 +200,8 @@ generateHtml summary path = do
 
           H.div ! A.class_ "row" $
             H.div ! A.class_ "well" $
-              H.toMarkup $ treeMarkup $ htmlRenderer summary
+              H.toMarkup $ treeMarkup "root" $ htmlRenderer summary
+
  where
   -- Total number of tests
   tests = getSum $ summaryFailures summary <> summarySuccesses summary
@@ -231,10 +237,11 @@ mkFailure testName desc =
       ) { summaryFailures = Sum 1 }
 
 -- | Create a @bootstrap-tree@ HTML /tree/.
-treeMarkup :: Markup -> Markup
-treeMarkup rest = H.div ! A.class_ "media" $
-                    H.ul ! A.class_ "media-list" $
-                      rest
+treeMarkup :: TestName -> Markup -> Markup
+treeMarkup name rest =
+  H.div ! A.id (H.toValue name) ! A.class_ "media collapse in" $
+    H.ul ! A.class_ "media-list" $
+      rest
 
 -- | Create a @bootstrap-tree@ HTML /treeitem/
 itemMarkup :: Markup -> Markup
@@ -245,10 +252,18 @@ type CssIcon  = AttributeValue
 type CssExtra = AttributeValue
 type CssText  = AttributeValue
 
-buttonMarkup :: CssExtra -> CssIcon -> Markup
-buttonMarkup extra icon =
+buttonMarkup :: Maybe TestName -> CssExtra -> CssIcon -> Markup
+buttonMarkup mtarget extra icon =
   H.button ! A.type_ "button"
-           ! A.class_ ("btn btn-xs media-object " <> extra)
+           ! A.class_ ("btn btn-xs pull-left media-object " <> extra)
+           -- TODO: Could this be done in a single case expression?
+           ! (if isNothing mtarget
+              then mempty
+              else H.dataAttribute "toggle" "collapse"
+             )
+           ! case mtarget of
+                   Nothing -> mempty
+                   Just target -> H.dataAttribute "target" (H.toValue ('#' : target))
            $ H.span ! A.class_ ("glyphicon " <> icon) $ ""
 
 -- | Markup generator for a test item.
@@ -259,7 +274,7 @@ testItemMarkup :: TestName
                -> CssText
                -> Markup
 testItemMarkup testName (desc,desca) icon extra text = do
-  H.a ! A.class_ "pull-left" ! A.href "#" $ buttonMarkup extra icon
+  buttonMarkup Nothing extra icon
   H.div ! A.class_ "media-body" $ do
     H.h5 ! A.class_ ("media-heading " <> text) $
       H.toMarkup $ "  " ++ testName
@@ -268,11 +283,10 @@ testItemMarkup testName (desc,desca) icon extra text = do
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
 
 -- | Markup generator for a test group.
-testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
-testGroupMarkup groupName extra text body =
+testGroupMarkup :: String -> TestName -> CssExtra -> CssText -> Markup -> Markup
+testGroupMarkup uniq groupName extra text body =
     H.li ! A.class_ "media" $ do
-      H.a ! A.class_ "pull-left" ! A.href "#" $
-        buttonMarkup extra "glyphicon-folder-open"
+      buttonMarkup (Just uniq) extra "glyphicon-folder-open"
       H.div ! A.class_ "media-body" $ do
         H.h4 ! A.class_ ("media-heading " <> text) $
           H.toMarkup $ "  " ++ groupName
