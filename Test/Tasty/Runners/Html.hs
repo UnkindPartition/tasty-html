@@ -158,7 +158,6 @@ generateHtml summary path = do
         return . H.unsafeByteString $ "<script \"type=text/javascript\">" <> bs <> "</script>"
 
   bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
-  bootStrapCssTheme <- includeMarkup "data/bootstrap/dist/css/bootstrap-theme.min.css"
   jQueryJs          <- includeScript "data/jquery-2.1.1.min.js"
   bootStrapJs       <- includeScript "data/bootstrap/dist/js/bootstrap.min.js"
   scriptJs          <- includeScript "data/script.js"
@@ -172,7 +171,7 @@ generateHtml summary path = do
                  ! A.content "width=device-width, initial-scale=1.0"
           H.title "Tasty Test Results"
           H.style bootStrapCss
-          H.style bootStrapCssTheme
+  --        H.style bootStrapCssTheme
 
           jQueryJs
           bootStrapJs
