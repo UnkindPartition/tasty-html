@@ -1,5 +1,7 @@
 $(document).ready(function () {
     $('.collapsible').click(function () {
-        $(this).parent().find('.collapse').collapse('toggle');
+        var $btn = $(this);
+        $btn.parent().find('.collapse').collapse('toggle');
+        $btn.find('span').toggleClass('glyphicon-folder-open glyphicon-folder-close');
     });
 });
