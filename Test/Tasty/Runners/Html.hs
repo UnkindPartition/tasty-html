@@ -9,7 +9,7 @@ module Test.Tasty.Runners.Html
   , htmlRunner
   ) where
 
-import Control.Applicative (Const(..), (<$), pure)
+import Control.Applicative (Const(..), (<$))
 import Control.Monad ((>=>), unless)
 import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
@@ -74,7 +74,7 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
         testTree
 
     -- Ignore ellapsed time
-    return . const $ do
+    return $ const $ do
       generateHtml summary path
       return $ getSum (summaryFailures summary) == 0
 
@@ -116,10 +116,10 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
     case status of
       -- If the test is done, generate HTML for it
       Done result
-        | Tasty.resultSuccessful result -> pure $
+        | Tasty.resultSuccessful result -> return $
             mkSuccess testName $ Tasty.resultDescription result
         | otherwise ->
-            pure $ mkFailure testName $ Tasty.resultDescription result
+            return $ mkFailure testName $ Tasty.resultDescription result
       -- Otherwise the test has either not been started or is currently
       -- executing
       _ -> STM.retry
@@ -141,7 +141,7 @@ runGroup groupName children = Traversal $ Compose $ do
       grouped = testGroupMarkup groupName extra text $
                   treeMarkup $ htmlRenderer soFar
 
-  pure $ Const soFar { htmlRenderer = grouped }
+  return $ Const soFar { htmlRenderer = grouped }
 
 -- ** HTML
 
@@ -171,7 +171,6 @@ generateHtml summary path = do
                  ! A.content "width=device-width, initial-scale=1.0"
           H.title "Tasty Test Results"
           H.style bootStrapCss
-  --        H.style bootStrapCssTheme
 
           jQueryJs
           bootStrapJs
@@ -233,14 +232,14 @@ mkFailure testName desc =
           "text-danger"
       ) { summaryFailures = Sum 1 }
 
--- | Create a @bootstrap-tree@ HTML /tree/.
+-- | Markup representing the branching of a /tree/.
 treeMarkup :: Markup -> Markup
 treeMarkup rest =
   H.div ! A.class_ "media collapse in" $
     H.ul ! A.class_ "media-list" $
       rest
 
--- | Create a @bootstrap-tree@ HTML /treeitem/
+-- | Markup representing an /item/ in a /tree/.
 itemMarkup :: Markup -> Markup
 itemMarkup = H.li ! A.class_ "media"
 
@@ -249,13 +248,24 @@ type CssIcon  = AttributeValue
 type CssExtra = AttributeValue
 type CssText  = AttributeValue
 
+-- | Markup for a button.
 buttonMarkup :: CssExtra -> CssIcon -> Markup
 buttonMarkup extra icon =
   H.button ! A.type_ "button"
            ! A.class_ ("btn btn-xs pull-left media-object " <> extra)
            $ H.span ! A.class_ ("glyphicon " <> icon) $ ""
 
--- | Markup generator for a test item.
+-- | Markup for a test group.
+testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
+testGroupMarkup groupName extra text body =
+    H.li ! A.class_ "media" $ do
+      buttonMarkup (extra <> " collapsible") "glyphicon-folder-open"
+      H.div ! A.class_ "media-body" $ do
+        H.h4 ! A.class_ ("media-heading " <> text) $
+          H.toMarkup $ "  " ++ groupName
+        body
+
+-- | Markup for a single test.
 testItemMarkup :: TestName
                -> CssDescription
                -> CssIcon
@@ -270,15 +280,5 @@ testItemMarkup testName (desc,desca) icon extra text = do
 
     unless (null desc) $
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
-
--- | Markup generator for a test group.
-testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
-testGroupMarkup groupName extra text body =
-    H.li ! A.class_ "media" $ do
-      buttonMarkup (extra <> " collapsible") "glyphicon-folder-open"
-      H.div ! A.class_ "media-body" $ do
-        H.h4 ! A.class_ ("media-heading " <> text) $
-          H.toMarkup $ "  " ++ groupName
-        body
 
 -- vim: textwidth=79 shiftwidth=2
