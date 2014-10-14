@@ -73,7 +73,7 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
         options
         testTree
 
-    -- Ignore ellapsed time
+    -- Ignore elapsed time
     return $ const $ do
       generateHtml summary path
       return $ getSum (summaryFailures summary) == 0
