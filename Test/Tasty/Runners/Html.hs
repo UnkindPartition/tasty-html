@@ -10,7 +10,7 @@ module Test.Tasty.Runners.Html
   ) where
 
 import Control.Applicative (Const(..), (<$))
-import Control.Monad ((>=>), unless)
+import Control.Monad ((>=>), unless, forM_)
 import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
@@ -18,6 +18,7 @@ import Data.Maybe (fromMaybe)
 import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
+import System.FilePath ((</>))
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
 import Control.Monad.State (StateT, evalStateT)
@@ -55,6 +56,18 @@ instance IsOption (Maybe HtmlPath) where
   optionName = Tagged "html"
   optionHelp = Tagged "A file path to store the test results in HTML"
 
+-- | Path where external assets will be looked up
+newtype AssetsPath = AssetsPath FilePath deriving (Typeable)
+
+-- | Assets 'Option' for the HTML 'Ingredient'.
+instance IsOption (Maybe AssetsPath) where
+    defaultValue = Nothing
+    parseValue = Just . Just . AssetsPath
+    optionName = Tagged "assets"
+    optionHelp = Tagged "Directory where HTML assets will be looked up. \
+                        \If not given the assets will be inlined within the \
+                        \HTML file"
+
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
     tests if you pass the @--html@ command line option. For example,
@@ -63,7 +76,8 @@ instance IsOption (Maybe HtmlPath) where
 -}
 htmlRunner :: Ingredient
 htmlRunner = TestReporter optionDescription $ \options testTree -> do
-  HtmlPath path <- lookupOption options
+  HtmlPath htmlPath <- lookupOption options
+  let mAssetsPath = lookupOption options
   return $ \statusMap -> do
     Const summary <- flip evalStateT 0 $ getCompose $ getTraversal $
       Tasty.foldTestTree
@@ -75,11 +89,13 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
 
     -- Ignore elapsed time
     return $ const $ do
-      generateHtml summary path
+      generateHtml summary htmlPath mAssetsPath
       return $ getSum (summaryFailures summary) == 0
 
  where
-  optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath)) ]
+  optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath))
+                      , Option (Proxy :: Proxy (Maybe AssetsPath))
+                      ]
 
 -- * Internal
 
@@ -148,8 +164,9 @@ runGroup groupName children = Traversal $ Compose $ do
 -- | Generates the final HTML report.
 generateHtml :: Summary  -- ^ Test summary.
              -> FilePath -- ^ Where to write.
+             -> Maybe AssetsPath -- ^ Path to external assets
              -> IO ()
-generateHtml summary path = do
+generateHtml summary htmlPath mAssetsPath = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
@@ -157,12 +174,13 @@ generateHtml summary path = do
       includeScript = getRead >=> \bs ->
         return . H.unsafeByteString $ "<script \"type=text/javascript\">" <> bs <> "</script>"
 
+  -- Only used when no external assets path specified
   bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
   jQueryJs          <- includeScript "data/jquery-2.1.1.min.js"
   bootStrapJs       <- includeScript "data/bootstrap/dist/js/bootstrap.min.js"
   scriptJs          <- includeScript "data/script.js"
 
-  TIO.writeFile path $
+  TIO.writeFile htmlPath $
     renderHtml $
       H.docTypeHtml ! A.lang "en" $ do
         H.head $ do
@@ -170,11 +188,17 @@ generateHtml summary path = do
           H.meta ! A.name "viewport"
                  ! A.content "width=device-width, initial-scale=1.0"
           H.title "Tasty Test Results"
-          H.style bootStrapCss
 
-          jQueryJs
-          bootStrapJs
-          scriptJs
+          case mAssetsPath of
+            Nothing -> do H.style bootStrapCss
+                          jQueryJs
+                          bootStrapJs
+                          scriptJs
+            Just (AssetsPath assetsPath) -> do
+              H.link ! A.rel "stylesheet"
+                     ! A.href (H.toValue $ assetsPath </> "bootstrap.min.css")
+              forM_ ["bootstrap.min.js", "jquery-2.1.1.min.js", "bootstrap.min.js"] $ \str ->
+                H.script ! A.src (H.toValue $ assetsPath </> str ) $ mempty
 
         H.body $ H.div ! A.class_ "container" $ do
           H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
