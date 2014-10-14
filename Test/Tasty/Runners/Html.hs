@@ -172,7 +172,7 @@ generateHtml summary htmlPath mAssetsPath = do
       includeMarkup = getRead >=> return . H.unsafeByteString
       -- blaze-html 'script' doesn't admit HTML inside
       includeScript = getRead >=> \bs ->
-        return . H.unsafeByteString $ "<script \"type=text/javascript\">" <> bs <> "</script>"
+        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
   -- Only used when no external assets path specified
   bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
