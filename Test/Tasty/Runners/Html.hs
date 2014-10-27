@@ -21,7 +21,7 @@ import GHC.Generics (Generic)
 import System.FilePath ((</>))
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
-import Control.Monad.State (StateT, evalStateT)
+import Control.Monad.State (StateT, evalStateT, liftIO)
 import qualified Control.Monad.State as State (get, modify)
 import Data.Functor.Compose (Compose(Compose,getCompose))
 import qualified Data.IntMap as IntMap
@@ -124,21 +124,23 @@ runTest :: IsTest t
 runTest statusMap _ testName _ = Traversal $ Compose $ do
   ix <- State.get
 
-  summary <- lift $ atomically $ do
+  result <- lift $ atomically $ do
     status <- readTVar $
       fromMaybe (error "Attempted to lookup test by index outside bounds") $
       IntMap.lookup ix statusMap
 
     case status of
-      -- If the test is done, generate HTML for it
-      Done result
-        | Tasty.resultSuccessful result -> return $
-            mkSuccess testName $ Tasty.resultDescription result
-        | otherwise ->
-            return $ mkFailure testName $ Tasty.resultDescription result
+      -- If the test is done, return the result
+      Done result -> return result
       -- Otherwise the test has either not been started or is currently
       -- executing
       _ -> STM.retry
+
+  -- Generate HTML for the test
+  msg <- liftIO . Tasty.formatMessage . Tasty.resultDescription $ result
+  let summary = if Tasty.resultSuccessful result
+                then mkSuccess testName msg
+                else mkFailure testName msg
 
   Const summary <$ State.modify (+1)
 
