@@ -66,7 +66,9 @@ instance IsOption (Maybe AssetsPath) where
     optionName = Tagged "assets"
     optionHelp = Tagged "Directory where HTML assets will be looked up. \
                         \If not given the assets will be inlined within the \
-                        \HTML file"
+                        \HTML file. \
+                        \The following files must be present: \
+                        \`bootstrap.min.css`, `bootstrap.min.js`, `jquery-2.1.1.min.js`"
 
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
