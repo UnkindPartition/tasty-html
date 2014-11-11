@@ -1,3 +1,8 @@
+0.4 - 2014-11-11
+----------------
+
+- Add option to load bootstrap assets externally.
+
 0.3
 ---
 
