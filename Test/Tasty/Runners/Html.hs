@@ -7,6 +7,7 @@
 module Test.Tasty.Runners.Html
   ( HtmlPath(..)
   , htmlRunner
+  , AssetsPath(..)
   ) where
 
 import Control.Applicative (Const(..), (<$))
