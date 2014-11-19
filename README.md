@@ -18,7 +18,7 @@ import Test.Tasty.Runners.Html
 import Data.List
 import Data.Ord
 
-main = defaultMainWithIngredients (htmlRunner:deafultIngredients) tests
+main = defaultMainWithIngredients (htmlRunner:defaultIngredients) tests
 
 tests :: TestTree
 tests = testGroup "Tests" [properties, unitTests]
