@@ -58,7 +58,14 @@ unitTests = testGroup "Unit tests"
   ]
 ```
 
-And here is the output of the above program rendered to HTML:
+To produce the HTML output, run the test program with the `--html` option,
+giving it the html file path:
+
+```
+./test --html results.html
+```
+
+Here is the output of the above program rendered to HTML:
 
 ![](https://raw.github.com/feuerbach/tasty-html/master/screenshot.png)
 
