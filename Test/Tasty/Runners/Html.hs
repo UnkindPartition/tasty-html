@@ -292,7 +292,7 @@ testGroupMarkup groupName extra text body =
       buttonMarkup (extra <> " collapsible") "glyphicon-folder-open"
       H.div ! A.class_ "media-body" $ do
         H.h4 ! A.class_ ("media-heading " <> text) $
-          H.toMarkup $ "  " ++ groupName
+          H.toMarkup groupName
         body
 
 -- | Markup for a single test.
@@ -306,7 +306,7 @@ testItemMarkup testName (desc,desca) icon extra text = do
   buttonMarkup extra icon
   H.div ! A.class_ "media-body" $ do
     H.h5 ! A.class_ ("media-heading " <> text) $
-      H.toMarkup $ "  " ++ testName
+      H.toMarkup testName
 
     unless (null desc) $
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
