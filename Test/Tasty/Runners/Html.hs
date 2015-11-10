@@ -11,7 +11,7 @@ module Test.Tasty.Runners.Html
   ) where
 
 import Control.Applicative (Const(..), (<$))
-import Control.Monad ((>=>), unless, forM_)
+import Control.Monad ((>=>), unless, forM_, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
@@ -42,6 +42,7 @@ import Text.Blaze.Html5 (Markup, AttributeValue, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
+import Text.Printf (printf)
 
 import Paths_tasty_html (getDataFileName)
 
@@ -141,9 +142,10 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
 
   -- Generate HTML for the test
   msg <- liftIO . Tasty.formatMessage . Tasty.resultDescription $ result
-  let summary = if Tasty.resultSuccessful result
-                then mkSuccess testName msg
-                else mkFailure testName msg
+  let time = Tasty.resultTime result
+      summary = if Tasty.resultSuccessful result
+                then mkSuccess (testName, time) msg
+                else mkFailure (testName, time) msg
 
   Const summary <$ State.modify (+1)
 
@@ -237,12 +239,12 @@ mkSummary :: Markup -> Summary
 mkSummary contents = mempty { htmlRenderer = itemMarkup contents }
 
 -- | Create an HTML 'Summary' with a test success.
-mkSuccess :: TestName
+mkSuccess :: (TestName, Tasty.Time)
           -> String -- ^ Description for the test.
           -> Summary
-mkSuccess testName desc =
+mkSuccess nameAndTime desc =
       ( mkSummary $ testItemMarkup
-          testName
+          nameAndTime
           (desc, "text-muted")
           "glyphicon-ok-sign"
           "btn-success"
@@ -250,12 +252,12 @@ mkSuccess testName desc =
       ) { summarySuccesses = Sum 1 }
 
 -- | Create an HTML 'Summary' with a test failure.
-mkFailure :: TestName
+mkFailure :: (TestName, Tasty.Time)
           -> String -- ^ Description for the test.
           -> Summary
-mkFailure testName desc =
+mkFailure nameAndTime desc =
       ( mkSummary $ testItemMarkup
-          testName
+          nameAndTime
           (desc, "text-danger")
           "glyphicon-remove-sign"
           "btn-danger"
@@ -296,19 +298,24 @@ testGroupMarkup groupName extra text body =
         body
 
 -- | Markup for a single test.
-testItemMarkup :: TestName
+testItemMarkup :: (TestName, Tasty.Time)
                -> CssDescription
                -> CssIcon
                -> CssExtra
                -> CssText
                -> Markup
-testItemMarkup testName (desc,desca) icon extra text = do
+testItemMarkup (testName,time) (desc,desca) icon extra text = do
   buttonMarkup extra icon
   H.div ! A.class_ "media-body" $ do
-    H.h5 ! A.class_ ("media-heading " <> text) $
+    H.h5 ! A.class_ ("media-heading " <> text) $ do
       H.toMarkup testName
+      when (time >= 0.01) $
+        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
 
     unless (null desc) $
       H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+
+formatTime :: Tasty.Time -> String
+formatTime = printf " (%.2fs)"
 
 -- vim: textwidth=79 shiftwidth=2
