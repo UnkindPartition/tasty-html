@@ -91,9 +91,8 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
         options
         testTree
 
-    -- Ignore elapsed time
-    return $ const $ do
-      generateHtml summary htmlPath mAssetsPath
+    return $ \time -> do
+      generateHtml summary time htmlPath mAssetsPath
       return $ getSum (summaryFailures summary) == 0
 
  where
@@ -170,10 +169,11 @@ runGroup groupName children = Traversal $ Compose $ do
 
 -- | Generates the final HTML report.
 generateHtml :: Summary  -- ^ Test summary.
+             -> Tasty.Time -- ^ Total run time.
              -> FilePath -- ^ Where to write.
              -> Maybe AssetsPath -- ^ Path to external assets
              -> IO ()
-generateHtml summary htmlPath mAssetsPath = do
+generateHtml summary time htmlPath mAssetsPath = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
       includeMarkup = getRead >=> return . H.unsafeByteString
@@ -217,13 +217,15 @@ generateHtml summary htmlPath mAssetsPath = do
                       H.toMarkup . getSum $ summaryFailures summary
                       " out of " :: Markup
                       H.toMarkup tests
-                      " tests failed"
+                      " tests failed" :: Markup
+                      H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
                 else
                   H.div ! A.class_ "alert alert-success" $
                     H.p ! A.class_ "lead text-center" $ do
                       "All " :: Markup
                       H.toMarkup tests
-                      " tests passed"
+                      " tests passed" :: Markup
+                      H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
 
             H.div ! A.class_ "row" $
               H.div ! A.class_ "well" $
