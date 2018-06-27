@@ -16,7 +16,8 @@ import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Monoid(mempty,mappend), (<>), Sum(Sum,getSum))
+import Data.Monoid (Monoid(mempty,mappend), Sum(Sum,getSum))
+import Data.Semigroup ((<>))
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import System.FilePath ((</>))
@@ -112,9 +113,12 @@ data Summary = Summary { summaryFailures :: Sum Int
                        , htmlRenderer :: Markup
                        } deriving (Generic)
 
+instance Semigroup Summary where
+  (<>) = mappenddefault
+
 instance Monoid Summary where
   mempty = memptydefault
-  mappend = mappenddefault
+  mappend = (<>)
 
 -- | A 'Traversal' composed of a 'Summary' and a test count.
 type SummaryTraversal = Traversal (Compose (StateT Int IO) (Const Summary))

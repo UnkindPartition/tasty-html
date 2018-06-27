@@ -33,6 +33,7 @@ library
     generic-deriving >= 1.6.2,
     mtl >= 2.1.2,
     stm >= 2.4.2,
+    semigroups,
     tagged >= 0.7,
     tasty >= 0.10.1,
     text >= 1.0,
