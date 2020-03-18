@@ -78,6 +78,14 @@ instance IsOption (Maybe AssetsPath) where
     tests if you pass the @--html@ command line option. For example,
     @--html=results.html@ will run all the tests and generate @results.html@ as
     output.
+
+    Note enabling @--html@ will ignore all ingredients following 'htmlRunner'.
+    If you want to produce the HTML report _in addition_ to other outputs, you can
+    use 'Test.Tasty.Ingredients.composeReporters', as in
+
+    > main = defaultMainWithIngredients ingredients tests
+    >   where ingredients = [ listingTests, htmlRunner `composeReporters` consoleTestReporter ]
+
 -}
 htmlRunner :: Ingredient
 htmlRunner = TestReporter optionDescription $ \options testTree -> do
