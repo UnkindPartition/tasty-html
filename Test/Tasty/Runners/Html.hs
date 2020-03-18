@@ -38,6 +38,7 @@ import Test.Tasty.Runners
   )
 import Test.Tasty.Providers (IsTest, TestName)
 import qualified Test.Tasty.Runners as Tasty
+import qualified Test.Tasty.Ingredients as Tasty
 import Test.Tasty.Options as Tasty
 import Text.Blaze.Html5 (Markup, AttributeValue, (!))
 import qualified Text.Blaze.Html5 as H
@@ -80,8 +81,8 @@ instance IsOption (Maybe AssetsPath) where
     output.
 
     Note enabling @--html@ will ignore all ingredients following 'htmlRunner'.
-    If you want to produce the HTML report _in addition_ to other outputs, you can
-    use 'Test.Tasty.Ingredients.composeReporters', as in
+    If you want to produce the HTML report /in addition/ to other outputs, you can
+    use 'Tasty.composeReporters', as in
 
     > main = defaultMainWithIngredients ingredients tests
     >   where ingredients = [ listingTests, htmlRunner `composeReporters` consoleTestReporter ]
@@ -108,6 +109,12 @@ htmlRunner = TestReporter optionDescription $ \options testTree -> do
   optionDescription = [ Option (Proxy :: Proxy (Maybe HtmlPath))
                       , Option (Proxy :: Proxy (Maybe AssetsPath))
                       ]
+
+-- Silence unused import warning
+_onlyUsedByHaddock :: ()
+_onlyUsedByHaddock = ()
+  where _ = Tasty.composeReporters
+
 
 -- * Internal
 
