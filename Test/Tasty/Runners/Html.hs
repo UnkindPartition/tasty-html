@@ -153,8 +153,8 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
   Const summary <$ State.modify (+1)
 
 -- | To be used for a 'TestGroup' when folding the final 'TestTree'.
-runGroup :: TestName -> SummaryTraversal -> SummaryTraversal
-runGroup groupName children = Traversal $ Compose $ do
+runGroup :: OptionSet -> TestName -> SummaryTraversal -> SummaryTraversal
+runGroup _opts groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
   let (extra,text) = if summaryFailures soFar > Sum 0
