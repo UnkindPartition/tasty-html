@@ -1,0 +1,5 @@
+resolver: lts-16.24
+packages:
+- .
+extra-deps:
+- tasty-1.4.0.3
