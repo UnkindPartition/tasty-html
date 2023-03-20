@@ -10,14 +10,13 @@ module Test.Tasty.Runners.Html
   , AssetsPath(..)
   ) where
 
-import Control.Applicative (Const(..), (<$))
+import Control.Applicative (Const(..))
 import Control.Monad ((>=>), unless, forM_, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Monoid(mempty,mappend), Sum(Sum,getSum))
-import Data.Semigroup ((<>))
+import Data.Monoid (Sum(Sum,getSum))
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import System.FilePath ((</>))
