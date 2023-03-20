@@ -7,11 +7,10 @@
 module Test.Tasty.Runners.Html
   ( HtmlPath(..)
   , htmlRunner
-  , AssetsPath(..)
   ) where
 
 import Control.Applicative (Const(..))
-import Control.Monad ((>=>), unless, forM_, when)
+import Control.Monad ((>=>), unless, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
@@ -19,7 +18,6 @@ import Data.Maybe (fromMaybe)
 import Data.Monoid (Sum(Sum,getSum))
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
-import System.FilePath ((</>))
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
 import Control.Monad.State (StateT, evalStateT, liftIO)
@@ -69,9 +67,7 @@ instance IsOption (Maybe AssetsPath) where
     optionName = Tagged "assets"
     optionHelp = Tagged "Directory where HTML assets will be looked up. \
                         \If not given the assets will be inlined within the \
-                        \HTML file. \
-                        \The following files must be present: \
-                        \`bootstrap.min.css`, `bootstrap.min.js`, `jquery-2.1.1.min.js`"
+                        \HTML file."
 
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
@@ -189,21 +185,17 @@ runGroup _opts groupName children = Traversal $ Compose $ do
 generateHtml :: Summary  -- ^ Test summary.
              -> Tasty.Time -- ^ Total run time.
              -> FilePath -- ^ Where to write.
-             -> Maybe AssetsPath -- ^ Path to external assets
+             -> Maybe AssetsPath
              -> IO ()
 generateHtml summary time htmlPath mAssetsPath = do
       -- Helpers to load external assets
   let getRead = getDataFileName >=> B.readFile
-      includeMarkup = getRead >=> return . H.unsafeByteString
-      -- blaze-html 'script' doesn't admit HTML inside
       includeScript = getRead >=> \bs ->
         return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
-  -- Only used when no external assets path specified
-  bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
-  jQueryJs          <- includeScript "data/jquery-2.1.1.min.js"
-  bootStrapJs       <- includeScript "data/bootstrap/dist/js/bootstrap.min.js"
-  scriptJs          <- includeScript "data/script.js"
+  epilogue <- case mAssetsPath of
+    Nothing -> includeScript "data/script.js"
+    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "script.js") $ mempty
 
   TIO.writeFile htmlPath $
     renderHtml $
@@ -215,14 +207,8 @@ generateHtml summary time htmlPath mAssetsPath = do
           H.title "Tasty Test Results"
 
           case mAssetsPath of
-            Nothing -> do H.style bootStrapCss
-                          jQueryJs
-                          bootStrapJs
-            Just (AssetsPath assetsPath) -> do
-              H.link ! A.rel "stylesheet"
-                     ! A.href (H.toValue $ assetsPath </> "bootstrap.min.css")
-              forM_ ["bootstrap.min.js", "jquery-2.1.1.min.js", "bootstrap.min.js"] $ \str ->
-                H.script ! A.src (H.toValue $ assetsPath </> str ) $ mempty
+            Nothing -> mempty
+            Just (AssetsPath _) -> mempty
 
         H.body $ do
           H.div ! A.class_ "container" $ do
@@ -248,7 +234,7 @@ generateHtml summary time htmlPath mAssetsPath = do
             H.div ! A.class_ "row" $
               H.div ! A.class_ "well" $
                 H.toMarkup $ treeMarkup $ htmlRenderer summary
-          scriptJs
+            epilogue
 
  where
   -- Total number of tests
