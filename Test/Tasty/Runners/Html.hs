@@ -167,15 +167,7 @@ runGroup :: OptionSet -> TestName -> SummaryTraversal -> SummaryTraversal
 runGroup _opts groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
-  let (extra,text) = if summaryFailures soFar > Sum 0
-                        then ( "btn-danger"
-                             , "text-danger"
-                             )
-                        else ( "btn-success"
-                             , "text-success"
-                             )
-      grouped = testGroupMarkup groupName extra text $
-                  treeMarkup $ htmlRenderer soFar
+  let grouped = testGroupMarkup groupName $ treeMarkup $ htmlRenderer soFar
 
   return $ Const soFar { htmlRenderer = grouped }
 
@@ -238,7 +230,7 @@ generateHtml summary time htmlPath mAssetsPath = do
 
 -- | Set the 'htmlRenderer' of a 'Summary' with the given 'Markup'.
 mkSummary :: Markup -> Summary
-mkSummary contents = mempty { htmlRenderer = itemMarkup contents }
+mkSummary contents = mempty { htmlRenderer = H.li contents }
 
 -- | Create an HTML 'Summary' with a test success.
 mkSuccess :: (TestName, Tasty.Time)
@@ -247,10 +239,7 @@ mkSuccess :: (TestName, Tasty.Time)
 mkSuccess nameAndTime desc =
       ( mkSummary $ testItemMarkup
           nameAndTime
-          (desc, "text-muted")
-          "glyphicon-ok-sign"
-          "btn-success"
-          "text-success"
+          desc
       ) { summarySuccesses = Sum 1 }
 
 -- | Create an HTML 'Summary' with a test failure.
@@ -260,62 +249,36 @@ mkFailure :: (TestName, Tasty.Time)
 mkFailure nameAndTime desc =
       ( mkSummary $ testItemMarkup
           nameAndTime
-          (desc, "text-danger")
-          "glyphicon-remove-sign"
-          "btn-danger"
-          "text-danger"
+          desc
       ) { summaryFailures = Sum 1 }
 
 -- | Markup representing the branching of a /tree/.
 treeMarkup :: Markup -> Markup
 treeMarkup rest =
-  H.div ! A.class_ "media collapse in" $
-    H.ul ! A.class_ "media-list" $
-      rest
-
--- | Markup representing an /item/ in a /tree/.
-itemMarkup :: Markup -> Markup
-itemMarkup = H.li ! A.class_ "media"
-
-type CssDescription = (String, AttributeValue)
-type CssIcon  = AttributeValue
-type CssExtra = AttributeValue
-type CssText  = AttributeValue
-
--- | Markup for a button.
-buttonMarkup :: CssExtra -> CssIcon -> Markup
-buttonMarkup extra icon =
-  H.button ! A.type_ "button"
-           ! A.class_ ("btn btn-xs pull-left media-object " <> extra)
-           $ H.span ! A.class_ ("glyphicon " <> icon) $ ""
+  H.div $ H.ul rest
 
 -- | Markup for a test group.
-testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
-testGroupMarkup groupName extra text body =
-    H.li ! A.class_ "media" $ do
-      buttonMarkup (extra <> " collapsible") "glyphicon-folder-open"
-      H.div ! A.class_ "media-body" $ do
-        H.h4 ! A.class_ ("media-heading " <> text) $
+testGroupMarkup :: TestName -> Markup -> Markup
+testGroupMarkup groupName body =
+    H.li $ do
+      H.div $ do
+        H.h4 $
           H.toMarkup groupName
         body
 
 -- | Markup for a single test.
 testItemMarkup :: (TestName, Tasty.Time)
-               -> CssDescription
-               -> CssIcon
-               -> CssExtra
-               -> CssText
+               -> String
                -> Markup
-testItemMarkup (testName,time) (desc,desca) icon extra text = do
-  buttonMarkup extra icon
-  H.div ! A.class_ "media-body" $ do
-    H.h5 ! A.class_ ("media-heading " <> text) $ do
+testItemMarkup (testName,time) desc = do
+  H.div $ do
+    H.h5 $ do
       H.toMarkup testName
       when (time >= 0.01) $
-        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+        H.span $ H.toMarkup (formatTime time)
 
     unless (null desc) $
-      H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+      H.pre $ H.small $ H.toMarkup desc
 
 formatTime :: Tasty.Time -> String
 formatTime = printf " (%.2fs)"
