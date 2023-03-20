@@ -157,8 +157,8 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
   msg <- liftIO . Tasty.formatMessage . Tasty.resultDescription $ result
   let time = Tasty.resultTime result
       summary = if Tasty.resultSuccessful result
-                then mkSuccess (testName, time) msg
-                else mkFailure (testName, time) msg
+                then mkSuccess testName time msg
+                else mkFailure testName time msg
 
   Const summary <$ State.modify (+1)
 
@@ -233,22 +233,24 @@ mkSummary :: Markup -> Summary
 mkSummary contents = mempty { htmlRenderer = H.li contents }
 
 -- | Create an HTML 'Summary' with a test success.
-mkSuccess :: (TestName, Tasty.Time)
+mkSuccess :: TestName
+          -> Tasty.Time
           -> String -- ^ Description for the test.
           -> Summary
-mkSuccess nameAndTime desc =
+mkSuccess name time desc =
       ( mkSummary $ testItemMarkup
-          nameAndTime
+          name time
           desc
       ) { summarySuccesses = Sum 1 }
 
 -- | Create an HTML 'Summary' with a test failure.
-mkFailure :: (TestName, Tasty.Time)
+mkFailure :: TestName
+          -> Tasty.Time
           -> String -- ^ Description for the test.
           -> Summary
-mkFailure nameAndTime desc =
+mkFailure name time desc =
       ( mkSummary $ testItemMarkup
-          nameAndTime
+          name time
           desc
       ) { summaryFailures = Sum 1 }
 
@@ -267,10 +269,11 @@ testGroupMarkup groupName body =
         body
 
 -- | Markup for a single test.
-testItemMarkup :: (TestName, Tasty.Time)
+testItemMarkup :: TestName
+               -> Tasty.Time
                -> String
                -> Markup
-testItemMarkup (testName,time) desc = do
+testItemMarkup testName time desc = do
   H.div $ do
     H.h5 $ do
       H.toMarkup testName
