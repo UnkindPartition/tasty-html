@@ -211,30 +211,29 @@ generateHtml summary time htmlPath mAssetsPath = do
             Just (AssetsPath _) -> mempty
 
         H.body $ do
-          H.div ! A.class_ "container" $ do
-            H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
-            H.div ! A.class_ "row" $
-              if summaryFailures summary > Sum 0
-                then
-                  H.div ! A.class_ "alert alert-danger" $
-                    H.p ! A.class_ "lead text-center" $ do
-                      H.toMarkup . getSum $ summaryFailures summary
-                      " out of " :: Markup
-                      H.toMarkup tests
-                      " tests failed" :: Markup
-                      H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
-                else
-                  H.div ! A.class_ "alert alert-success" $
-                    H.p ! A.class_ "lead text-center" $ do
-                      "All " :: Markup
-                      H.toMarkup tests
-                      " tests passed" :: Markup
-                      H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+          H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
+          H.div ! A.class_ "row" $
+            if summaryFailures summary > Sum 0
+              then
+                H.div ! A.class_ "alert alert-danger" $
+                  H.p ! A.class_ "lead text-center" $ do
+                    H.toMarkup . getSum $ summaryFailures summary
+                    " out of " :: Markup
+                    H.toMarkup tests
+                    " tests failed" :: Markup
+                    H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+              else
+                H.div ! A.class_ "alert alert-success" $
+                  H.p ! A.class_ "lead text-center" $ do
+                    "All " :: Markup
+                    H.toMarkup tests
+                    " tests passed" :: Markup
+                    H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
 
-            H.div ! A.class_ "row" $
-              H.div ! A.class_ "well" $
-                H.toMarkup $ treeMarkup $ htmlRenderer summary
-            epilogue
+          H.div ! A.class_ "row" $
+            H.div ! A.class_ "well" $
+              H.toMarkup $ treeMarkup $ htmlRenderer summary
+          epilogue
 
  where
   -- Total number of tests
