@@ -214,30 +214,29 @@ generateHtml summary time htmlPath mAssetsPath = do
           H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
           H.div ! A.class_ "row" $
             if summaryFailures summary > Sum 0
-              then
-                H.div ! A.class_ "alert alert-danger" $
-                  H.p ! A.class_ "lead text-center" $ do
-                    H.toMarkup . getSum $ summaryFailures summary
-                    " out of " :: Markup
-                    H.toMarkup tests
-                    " tests failed" :: Markup
-                    H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
-              else
-                H.div ! A.class_ "alert alert-success" $
-                  H.p ! A.class_ "lead text-center" $ do
-                    "All " :: Markup
-                    H.toMarkup tests
-                    " tests passed" :: Markup
-                    H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+              then successBanner
+              else failureBanner
 
-          H.div ! A.class_ "row" $
-            H.div ! A.class_ "well" $
-              H.toMarkup $ treeMarkup $ htmlRenderer summary
+          H.div ! A.class_ "tree" $
+            H.toMarkup $ treeMarkup $ htmlRenderer summary
           epilogue
+  where
+    successBanner = H.div ! A.class_ "alert alert-danger" $
+      H.p ! A.class_ "lead text-center" $ do
+        H.toMarkup . getSum $ summaryFailures summary
+        " out of " :: Markup
+        H.toMarkup tests
+        " tests failed" :: Markup
+        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
 
- where
-  -- Total number of tests
-  tests = getSum $ summaryFailures summary <> summarySuccesses summary
+    failureBanner = H.div ! A.class_ "alert alert-success" $
+      H.p ! A.class_ "lead text-center" $ do
+        "All " :: Markup
+        H.toMarkup tests
+        " tests passed" :: Markup
+        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+
+    tests = getSum $ summaryFailures summary <> summarySuccesses summary
 
 -- | Set the 'htmlRenderer' of a 'Summary' with the given 'Markup'.
 mkSummary :: Markup -> Summary
