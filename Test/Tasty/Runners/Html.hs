@@ -204,10 +204,9 @@ generateHtml summary time htmlPath mAssetsPath = do
 
         H.body $ do
           H.h1 "Tasty Test Results"
-          H.div $
-            if summaryFailures summary > Sum 0
-              then failureBanner
-              else successBanner
+          if summaryFailures summary > Sum 0
+            then failureBanner
+            else successBanner
 
           H.div $
             H.toMarkup $ treeMarkup $ htmlRenderer summary
