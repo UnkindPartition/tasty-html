@@ -4,3 +4,4 @@ dist
 *.hi
 *.o
 .tags
+*.html
