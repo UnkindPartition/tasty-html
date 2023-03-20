@@ -208,8 +208,7 @@ generateHtml summary time htmlPath mAssetsPath = do
             then failureBanner
             else successBanner
 
-          H.div $
-            H.toMarkup $ treeMarkup $ htmlRenderer summary
+          H.toMarkup $ treeMarkup $ htmlRenderer summary
           epilogue
   where
     getRead = getDataFileName >=> B.readFile
