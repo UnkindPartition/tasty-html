@@ -34,6 +34,17 @@ body {
   padding: 1rem;
 }
 
+body > ul > li:first-child > .group::before {
+  border-left: none;
+}
+
+/* We have a root element. This is a tree, not a forest.
+ * This might always be the case with tasty?
+ */
+body > ul > li:first-child:last-child > .group::before {
+  border-bottom: none;
+}
+
 li {
   list-style: none;
   position: relative;
@@ -47,7 +58,6 @@ li {
   padding: var(--left-space);
 }
 
-  
 .group::before, .group::after, .item::before {
   position: absolute;
   content: "";
@@ -59,6 +69,14 @@ li {
 .item::before {
   height: calc(100% + var(--y-space));
   top: calc(0px - var(--y-space));
+}
+
+.item, .group {
+  background: #dfd;
+}
+
+.item.fail, .group.fail {
+  background: #fdd;
 }
 
 .group::before {

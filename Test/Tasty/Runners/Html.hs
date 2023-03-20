@@ -167,7 +167,8 @@ runGroup :: OptionSet -> TestName -> SummaryTraversal -> SummaryTraversal
 runGroup _opts groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
-  let grouped = testGroupMarkup groupName $ treeMarkup $ htmlRenderer soFar
+  let successful = summaryFailures soFar == Sum 0
+  let grouped = testGroupMarkup groupName successful $ treeMarkup $ htmlRenderer soFar
 
   return $ Const soFar { htmlRenderer = grouped }
 
@@ -262,11 +263,18 @@ treeMarkup :: Markup -> Markup
 treeMarkup = H.ul
 
 -- | Markup for a test group.
-testGroupMarkup :: TestName -> Markup -> Markup
-testGroupMarkup groupName body =
+testGroupMarkup :: TestName -> Bool -> Markup -> Markup
+testGroupMarkup groupName successful body =
   H.li $ do
-    H.h4 ! A.class_ "group" $ H.toMarkup groupName
+    H.h4 ! className $ H.toMarkup groupName
     body
+
+  where
+    className :: H.Attribute
+    className = classNames $ ["group"] <> ["fail" | not successful]
+
+classNames :: [String] -> H.Attribute
+classNames = A.class_ . H.toValue . unwords
 
 -- | Markup for a single test.
 testItemMarkup :: TestName
@@ -275,7 +283,7 @@ testItemMarkup :: TestName
                -> String
                -> Markup
 testItemMarkup testName successful time desc = do
-  H.div ! A.class_ className $ do
+  H.div ! className $ do
     H.h5 $ do
       H.toMarkup testName
       when (time >= 0.01) $
@@ -285,11 +293,8 @@ testItemMarkup testName successful time desc = do
       H.pre $ H.small $ H.toMarkup desc
 
   where
-    classNames :: [String]
-    classNames = ["item"] <> ["failed" | not successful]
-
-    className :: H.AttributeValue
-    className = H.toValue $ unwords classNames
+    className :: H.Attribute
+    className = classNames $ ["item"] <> ["fail" | not successful]
 
 formatTime :: Tasty.Time -> String
 formatTime = printf " (%.2fs)"
