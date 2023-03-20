@@ -268,7 +268,7 @@ treeMarkup rest =
 testGroupMarkup :: TestName -> Markup -> Markup
 testGroupMarkup groupName body =
   H.li  $ do
-    H.span! A.class_ "group" $ H.toMarkup groupName
+    H.span ! A.class_ "group" $ H.toMarkup groupName
     body
 
 -- | Markup for a single test.
@@ -277,7 +277,7 @@ testItemMarkup :: TestName
                -> String
                -> Markup
 testItemMarkup testName time desc = do
-  H.div $ do
+  H.div ! A.class_ "item" $ do
     H.h5 $ do
       H.toMarkup testName
       when (time >= 0.01) $

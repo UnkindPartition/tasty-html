@@ -7,7 +7,8 @@
   padding: 0;
   border: 0;
 
-  --border-col: #ccc;
+  --border-col: #aaa;
+  --border-style: 1px solid var(--border-col);
   color: #333;
 
   --left-space: 0.7rem;
@@ -15,6 +16,10 @@
   --padding: 0.5rem;
   --y-line-offset: 0.5rem;
   --y-space: 0.5rem;
+}
+
+body {
+  padding: 1rem;
 }
 
 ul {
@@ -34,18 +39,24 @@ li {
   padding: var(--left-space);
 }
 
-.group::before, .group::after {
+  
+.group::before, .group::after, .item::before {
   position: absolute;
   content: "";
   left: var(--n-left-space);
-  border-left: 1px solid #ddd;
+  border-left: var(--border-style);
   width: var(--left-space);
+}
+
+.item::before {
+  height: calc(100% + var(--y-space));
+  top: calc(0px - var(--y-space));
 }
 
 .group::before {
   --height: calc(var(--y-line-offset) + var(--y-space));
   top: calc(var(--y-line-offset) - var(--height));
-  border-bottom: 1px solid #ddd;
+  border-bottom: var(--border-style);
   height: var(--height);
 }
 
