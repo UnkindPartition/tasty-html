@@ -37,7 +37,7 @@ import Test.Tasty.Providers (IsTest, TestName)
 import qualified Test.Tasty.Runners as Tasty
 import qualified Test.Tasty.Ingredients as Tasty
 import Test.Tasty.Options as Tasty
-import Text.Blaze.Html5 (Markup, AttributeValue, (!))
+import Text.Blaze.Html5 (Markup, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
@@ -237,22 +237,18 @@ mkSuccess :: TestName
           -> Tasty.Time
           -> String -- ^ Description for the test.
           -> Summary
-mkSuccess name time desc =
-      ( mkSummary $ testItemMarkup
-          name time
-          desc
-      ) { summarySuccesses = Sum 1 }
+mkSuccess name time desc = summary { summarySuccesses = Sum 1 }
+  where
+    summary = mkSummary $ testItemMarkup name time desc
 
 -- | Create an HTML 'Summary' with a test failure.
 mkFailure :: TestName
           -> Tasty.Time
           -> String -- ^ Description for the test.
           -> Summary
-mkFailure name time desc =
-      ( mkSummary $ testItemMarkup
-          name time
-          desc
-      ) { summaryFailures = Sum 1 }
+mkFailure name time desc = summary { summaryFailures = Sum 1 }
+  where
+    summary = mkSummary $ testItemMarkup name time desc
 
 -- | Markup representing the branching of a /tree/.
 treeMarkup :: Markup -> Markup
