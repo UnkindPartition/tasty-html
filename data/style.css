@@ -18,6 +18,18 @@
   --y-space: 0.5rem;
 }
 
+h1, #status-banner {
+  margin-bottom: 1.5rem;
+}
+
+#status-banner.pass {
+  color: #5FBD77;
+}
+
+#status-banner.fail {
+  color: #cf1919;
+}
+
 body {
   padding: 1rem;
 }

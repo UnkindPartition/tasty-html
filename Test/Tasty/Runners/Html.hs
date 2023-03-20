@@ -206,8 +206,8 @@ generateHtml summary time htmlPath mAssetsPath = do
           H.h1 "Tasty Test Results"
           H.div $
             if summaryFailures summary > Sum 0
-              then successBanner
-              else failureBanner
+              then failureBanner
+              else successBanner
 
           H.div $
             H.toMarkup $ treeMarkup $ htmlRenderer summary
@@ -222,14 +222,14 @@ generateHtml summary time htmlPath mAssetsPath = do
       bs <- getRead path
       pure $ H.style $ H.unsafeByteString bs
 
-    successBanner = H.div $ do
+    failureBanner = H.div ! A.id "status-banner" ! A.class_ "fail" $ do
       H.toMarkup . getSum $ summaryFailures summary
       " out of " :: Markup
       H.toMarkup tests
       " tests failed" :: Markup
       H.span $ H.toMarkup $ formatTime time
 
-    failureBanner = H.div $ do
+    successBanner = H.div ! A.id "status-banner" ! A.class_ "pass" $ do
       "All " :: Markup
       H.toMarkup tests
       " tests passed" :: Markup
@@ -248,7 +248,7 @@ mkSuccess :: TestName
           -> Summary
 mkSuccess name time desc = summary { summarySuccesses = Sum 1 }
   where
-    summary = mkSummary $ testItemMarkup name time desc
+    summary = mkSummary $ testItemMarkup name True time desc
 
 -- | Create an HTML 'Summary' with a test failure.
 mkFailure :: TestName
@@ -257,7 +257,7 @@ mkFailure :: TestName
           -> Summary
 mkFailure name time desc = summary { summaryFailures = Sum 1 }
   where
-    summary = mkSummary $ testItemMarkup name time desc
+    summary = mkSummary $ testItemMarkup name False time desc
 
 -- | Markup representing the branching of a /tree/.
 treeMarkup :: Markup -> Markup
@@ -267,17 +267,18 @@ treeMarkup rest =
 -- | Markup for a test group.
 testGroupMarkup :: TestName -> Markup -> Markup
 testGroupMarkup groupName body =
-  H.li  $ do
-    H.span ! A.class_ "group" $ H.toMarkup groupName
+  H.li $ do
+    H.h4 ! A.class_ "group" $ H.toMarkup groupName
     body
 
 -- | Markup for a single test.
 testItemMarkup :: TestName
+               -> Bool
                -> Tasty.Time
                -> String
                -> Markup
-testItemMarkup testName time desc = do
-  H.div ! A.class_ "item" $ do
+testItemMarkup testName successful time desc = do
+  H.div ! A.class_ className $ do
     H.h5 $ do
       H.toMarkup testName
       when (time >= 0.01) $
@@ -285,6 +286,13 @@ testItemMarkup testName time desc = do
 
     unless (null desc) $
       H.pre $ H.small $ H.toMarkup desc
+
+  where
+    classNames :: [String]
+    classNames = ["item"] <> ["failed" | not successful]
+
+    className :: H.AttributeValue
+    className = H.toValue $ unwords classNames
 
 formatTime :: Tasty.Time -> String
 formatTime = printf " (%.2fs)"
