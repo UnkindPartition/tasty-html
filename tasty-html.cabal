@@ -13,9 +13,6 @@ extra-source-files:  README.md, CHANGELOG.md
 cabal-version:       >=1.10
 
 data-files:
-     data/bootstrap/dist/css/bootstrap.min.css
-     data/jquery-2.1.1.min.js
-     data/bootstrap/dist/js/bootstrap.min.js
      data/script.js
 
 source-repository head
