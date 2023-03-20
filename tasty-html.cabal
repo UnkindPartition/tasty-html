@@ -36,6 +36,20 @@ test-suite tasty-html-fail
     tasty-html,
     blaze-html
 
+test-suite tasty-html-pass
+  default-language: Haskell98
+  type:    exitcode-stdio-1.0
+  main-is: pass.hs
+  hs-source-dirs: examples
+  build-depends:
+    base,
+    tasty,
+    tasty-hunit,
+    tasty-smallcheck,
+    tasty-quickcheck,
+    tasty-html,
+    blaze-html
+
 library
   default-language: Haskell98
   exposed-modules: Test.Tasty.Runners.Html
