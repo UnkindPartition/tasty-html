@@ -211,30 +211,28 @@ generateHtml summary time htmlPath mAssetsPath = do
             Just (AssetsPath _) -> mempty
 
         H.body $ do
-          H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
-          H.div ! A.class_ "row" $
+          H.h1 "Tasty Test Results"
+          H.div $
             if summaryFailures summary > Sum 0
               then successBanner
               else failureBanner
 
-          H.div ! A.class_ "tree" $
+          H.div $
             H.toMarkup $ treeMarkup $ htmlRenderer summary
           epilogue
   where
-    successBanner = H.div ! A.class_ "alert alert-danger" $
-      H.p ! A.class_ "lead text-center" $ do
-        H.toMarkup . getSum $ summaryFailures summary
-        " out of " :: Markup
-        H.toMarkup tests
-        " tests failed" :: Markup
-        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+    successBanner = H.div $ do
+      H.toMarkup . getSum $ summaryFailures summary
+      " out of " :: Markup
+      H.toMarkup tests
+      " tests failed" :: Markup
+      H.span $ H.toMarkup $ formatTime time
 
-    failureBanner = H.div ! A.class_ "alert alert-success" $
-      H.p ! A.class_ "lead text-center" $ do
-        "All " :: Markup
-        H.toMarkup tests
-        " tests passed" :: Markup
-        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+    failureBanner = H.div $ do
+      "All " :: Markup
+      H.toMarkup tests
+      " tests passed" :: Markup
+      H.span $ H.toMarkup $ formatTime time
 
     tests = getSum $ summaryFailures summary <> summarySuccesses summary
 
