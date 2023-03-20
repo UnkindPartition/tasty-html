@@ -34,10 +34,6 @@ body {
   padding: 1rem;
 }
 
-ul {
-  padding: 0;
-}
-
 li {
   list-style: none;
   position: relative;
