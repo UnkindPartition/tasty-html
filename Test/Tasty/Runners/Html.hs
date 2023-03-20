@@ -267,11 +267,9 @@ treeMarkup rest =
 -- | Markup for a test group.
 testGroupMarkup :: TestName -> Markup -> Markup
 testGroupMarkup groupName body =
-  H.li ! A.class_ "group" $ do
-    H.div $ do
-      H.h4 $
-        H.toMarkup groupName
-      body
+  H.li  $ do
+    H.span! A.class_ "group" $ H.toMarkup groupName
+    body
 
 -- | Markup for a single test.
 testItemMarkup :: TestName
