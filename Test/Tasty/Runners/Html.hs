@@ -180,11 +180,10 @@ generateHtml :: Summary  -- ^ Test summary.
              -> Maybe AssetsPath
              -> IO ()
 generateHtml summary time htmlPath mAssetsPath = do
-      -- Helpers to load external assets
-  let getRead = getDataFileName >=> B.readFile
-      includeScript = getRead >=> \bs ->
-        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
+  prologue <- case mAssetsPath of
+    Nothing -> includeStyle "data/style.css"
+    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "style.css") $ mempty
   epilogue <- case mAssetsPath of
     Nothing -> includeScript "data/script.js"
     Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "script.js") $ mempty
@@ -197,6 +196,7 @@ generateHtml summary time htmlPath mAssetsPath = do
           H.meta ! A.name "viewport"
                  ! A.content "width=device-width, initial-scale=1.0"
           H.title "Tasty Test Results"
+          prologue
 
           case mAssetsPath of
             Nothing -> mempty
@@ -213,6 +213,15 @@ generateHtml summary time htmlPath mAssetsPath = do
             H.toMarkup $ treeMarkup $ htmlRenderer summary
           epilogue
   where
+    getRead = getDataFileName >=> B.readFile
+
+    includeScript = getRead >=> \bs ->
+      return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
+
+    includeStyle path = do
+      bs <- getRead path
+      pure $ H.style $ H.unsafeByteString bs
+
     successBanner = H.div $ do
       H.toMarkup . getSum $ summaryFailures summary
       " out of " :: Markup
@@ -258,11 +267,11 @@ treeMarkup rest =
 -- | Markup for a test group.
 testGroupMarkup :: TestName -> Markup -> Markup
 testGroupMarkup groupName body =
-    H.li $ do
-      H.div $ do
-        H.h4 $
-          H.toMarkup groupName
-        body
+  H.li ! A.class_ "group" $ do
+    H.div $ do
+      H.h4 $
+        H.toMarkup groupName
+      body
 
 -- | Markup for a single test.
 testItemMarkup :: TestName
