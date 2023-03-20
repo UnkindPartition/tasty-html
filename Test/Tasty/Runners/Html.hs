@@ -259,8 +259,7 @@ mkFailure name time desc = summary { summaryFailures = Sum 1 }
 
 -- | Markup representing the branching of a /tree/.
 treeMarkup :: Markup -> Markup
-treeMarkup rest =
-  H.div $ H.ul rest
+treeMarkup rest = H.ul rest
 
 -- | Markup for a test group.
 testGroupMarkup :: TestName -> Markup -> Markup
