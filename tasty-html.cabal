@@ -22,7 +22,22 @@ source-repository head
   type: git
   location: git://github.com/feuerbach/tasty-html.git
 
+test-suite tasty-html-fail
+  default-language: Haskell98
+  type:    exitcode-stdio-1.0
+  main-is: fail.hs
+  hs-source-dirs: examples
+  build-depends:
+    base,
+    tasty,
+    tasty-hunit,
+    tasty-smallcheck,
+    tasty-quickcheck,
+    tasty-html,
+    blaze-html
+
 library
+  default-language: Haskell98
   exposed-modules: Test.Tasty.Runners.Html
   other-modules: Paths_tasty_html
   build-depends:
@@ -39,5 +54,4 @@ library
     text >= 1.0,
     transformers >= 0.3.0.0,
     blaze-html >= 0.7
-  default-language: Haskell98
   ghc-options: -Wall
