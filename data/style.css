@@ -18,8 +18,8 @@ html {
   --border-col: #aaa;
   --fail-col: #b23;
   --pass-col: #0a2;
-  --hover-group-bg: #ddd;
-  --hover-subgroup-bg: #eee;
+  --hover-group-bg: rgb(0, 0, 0, 0.15);
+  --hover-subgroup-bg: rgb(0, 0, 0, 0.05);
 
   color: #333;
   background: #fff;
@@ -30,13 +30,13 @@ html {
 @media (prefers-color-scheme: dark) {
   html {
     color: #ddd;
-    background: #181818;
+    background: #1c1822;
 
     --border-col: #555;
-    --fail-col: #f55;
-    --pass-col: #9e9;
-    --hover-group-bg: #444;
-    --hover-subgroup-bg: #282828;
+    --fail-col: #f77;
+    --pass-col: #9fb;
+    --hover-group-bg: rgb(255, 255, 255, 0.15);
+    --hover-subgroup-bg: rgb(255, 255, 255, 0.05);
   }
 }
 
@@ -46,10 +46,6 @@ h1, #status-banner {
 
 #status-banner.pass {
   color: var(--pass-col);
-}
-
-#status-banner.fail {
-  color: var(--fail-col);
 }
 
 body {
@@ -115,6 +111,7 @@ li {
   padding: 0 var(--left-space);
 }
 
+#status-banner.fail,
 .item.fail {
   color: var(--fail-col);
 }
