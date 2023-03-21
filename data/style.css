@@ -1,3 +1,11 @@
+* {
+  /* Bare minimum reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+}
+
 html {
   --border-style: 1px solid var(--border-col);
 
@@ -15,16 +23,8 @@ html {
 
   color: #333;
   background: #fff;
-}
 
-* {
   font-family: Sans, sans-serif, Tahoma, Arial;
-  box-sizing: border-box;
-
-  /* Bare minimum reset */
-  margin: 0;
-  padding: 0;
-  border: 0;
 }
 
 @media (prefers-color-scheme: dark) {
