@@ -132,18 +132,13 @@ li {
   top: var(--y-line-offset);
 }
 
-li:last-child > .group::after {
-  display: none;
-}
-
 .ellipsis {
   padding-left: var(--left-space);
 }
 
+.group.rollup + ul,
+li:last-child > .group::after,
+.group:not(.rollup) > .expand,
 .group:not(.rollup) ~ .ellipsis {
-  display: none;
-}
-
-.group.rollup + ul {
   display: none;
 }

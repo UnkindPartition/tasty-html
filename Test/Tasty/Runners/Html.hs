@@ -266,7 +266,9 @@ treeMarkup = H.ul
 testGroupMarkup :: TestName -> Bool -> Markup -> Markup
 testGroupMarkup groupName successful body =
   H.li $ do
-    H.h4 ! className $ H.toMarkup groupName
+    H.h4 ! className $ do
+      H.toMarkup groupName
+      H.span ! A.class_ "expand" $ " (click to expand)"
     body
     H.div ! A.class_ "ellipsis" $ H.preEscapedText "&#x2026;" -- "…"
 
