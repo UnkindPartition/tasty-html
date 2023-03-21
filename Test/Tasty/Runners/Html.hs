@@ -268,7 +268,7 @@ testGroupMarkup groupName successful body =
   H.li $ do
     H.h4 ! className $ H.toMarkup groupName
     body
-    H.div ! A.class_ "ellipsis" $ "…"
+    H.div ! A.class_ "ellipsis" $ H.preEscapedText "&#x2026;" -- "…"
 
   where
     className :: H.Attribute
@@ -286,7 +286,10 @@ testItemMarkup :: TestName
 testItemMarkup testName successful time desc = do
   H.li ! className $ do
     -- for check mark / cross
-    H.div ! A.class_ "mark" $ if successful then "✓" else "✕"
+    H.div ! A.class_ "mark" $ H.preEscapedText $
+      if successful
+      then "&#x2713;" -- "✓"
+      else "&#x2715;" -- "✕"
     H.div $ do
       H.h5 $ do
         H.toMarkup testName
