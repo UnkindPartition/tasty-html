@@ -42,7 +42,7 @@ body > ul > li:first-child > .group::before {
  * This might always be the case with tasty?
  */
 body > ul > li:first-child:last-child > .group::before {
-  border-bottom: none;
+  border: 0;
 }
 
 body > ul > li:first-child:last-child {
