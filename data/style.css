@@ -1,5 +1,4 @@
 html {
-  --border-col: #aaa;
   --border-style: 1px solid var(--border-col);
 
   --left-space: 0.7rem;
@@ -8,7 +7,14 @@ html {
   --y-line-offset: 0.5rem;
   --y-space: 0.5rem;
 
+  --border-col: #aaa;
+  --fail-col: #b23;
+  --pass-col: #0a2;
+  --hover-group-bg: #ddd;
+  --hover-subgroup-bg: #eee;
+
   color: #333;
+  background: #fff;
 }
 
 * {
@@ -19,7 +25,19 @@ html {
   margin: 0;
   padding: 0;
   border: 0;
+}
 
+@media (prefers-color-scheme: dark) {
+  html {
+    color: #ddd;
+    background: #181818;
+
+    --border-col: #555;
+    --fail-col: #f55;
+    --pass-col: #9e9;
+    --hover-group-bg: #444;
+    --hover-subgroup-bg: #282828;
+  }
 }
 
 h1, #status-banner {
@@ -27,11 +45,11 @@ h1, #status-banner {
 }
 
 #status-banner.pass {
-  color: #5FBD77;
+  color: var(--pass-col);
 }
 
 #status-banner.fail {
-  color: #cf1919;
+  color: var(--fail-col);
 }
 
 body {
@@ -60,7 +78,16 @@ li {
   margin-top: var(--y-space);
 }
 
+.group:hover {
+  background: var(--hover-group-bg);
+}
+
+.group:hover + ul .group {
+  background: var(--hover-subgroup-bg);
+}
+
 .group {
+  cursor: pointer;
   display: block;
   border: 1px solid var(--border-col);
   padding: var(--left-space);
@@ -89,7 +116,7 @@ li {
 }
 
 .item.fail {
-  background: #fdd;
+  color: var(--fail-col);
 }
 
 .group::before {
@@ -106,5 +133,17 @@ li {
 }
 
 li:last-child > .group::after {
+  display: none;
+}
+
+.ellipsis {
+  padding-left: var(--left-space);
+}
+
+.group:not(.rollup) ~ .ellipsis {
+  display: none;
+}
+
+.group.rollup + ul {
   display: none;
 }

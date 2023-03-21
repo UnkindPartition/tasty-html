@@ -268,6 +268,7 @@ testGroupMarkup groupName successful body =
   H.li $ do
     H.h4 ! className $ H.toMarkup groupName
     body
+    H.div ! A.class_ "ellipsis" $ "…"
 
   where
     className :: H.Attribute
