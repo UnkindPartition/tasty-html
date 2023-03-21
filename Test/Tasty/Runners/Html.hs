@@ -238,7 +238,7 @@ generateHtml summary time htmlPath mAssetsPath = do
 
 -- | Set the 'htmlRenderer' of a 'Summary' with the given 'Markup'.
 mkSummary :: Markup -> Summary
-mkSummary contents = mempty { htmlRenderer = H.li contents }
+mkSummary contents = mempty { htmlRenderer = contents }
 
 -- | Create an HTML 'Summary' with a test success.
 mkSuccess :: TestName
@@ -283,14 +283,17 @@ testItemMarkup :: TestName
                -> String
                -> Markup
 testItemMarkup testName successful time desc = do
-  H.div ! className $ do
-    H.h5 $ do
-      H.toMarkup testName
-      when (time >= 0.01) $
-        H.span $ H.toMarkup (formatTime time)
+  H.li ! className $ do
+    -- for check mark / cross
+    H.div ! A.class_ "mark" $ if successful then "✓" else "✕"
+    H.div $ do
+      H.h5 $ do
+        H.toMarkup testName
+        when (time >= 0.01) $
+          H.span $ H.toMarkup (formatTime time)
 
-    unless (null desc) $
-      H.pre $ H.small $ H.toMarkup desc
+      unless (null desc) $
+        H.pre $ H.small $ H.toMarkup desc
 
   where
     className :: H.Attribute

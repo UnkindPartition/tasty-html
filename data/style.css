@@ -45,6 +45,10 @@ body > ul > li:first-child:last-child > .group::before {
   border-bottom: none;
 }
 
+body > ul > li:first-child:last-child {
+  margin: 0;
+}
+
 li {
   list-style: none;
   position: relative;
@@ -71,11 +75,16 @@ li {
   top: calc(0px - var(--y-space));
 }
 
-.item, .group {
-  background: #dfd;
+.item {
+  display: flex;
+  align-items: center;
 }
 
-.item.fail, .group.fail {
+.item > .mark {
+  padding: 0 var(--left-space);
+}
+
+.item.fail {
   background: #fdd;
 }
 
