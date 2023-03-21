@@ -1,3 +1,16 @@
+html {
+  --border-col: #aaa;
+  --border-style: 1px solid var(--border-col);
+
+  --left-space: 0.7rem;
+  --n-left-space: calc(0rem - var(--left-space));
+  --padding: 0.5rem;
+  --y-line-offset: 0.5rem;
+  --y-space: 0.5rem;
+
+  color: #333;
+}
+
 * {
   font-family: Sans, sans-serif, Tahoma, Arial;
   box-sizing: border-box;
@@ -7,15 +20,6 @@
   padding: 0;
   border: 0;
 
-  --border-col: #aaa;
-  --border-style: 1px solid var(--border-col);
-  color: #333;
-
-  --left-space: 0.7rem;
-  --n-left-space: calc(0rem - var(--left-space));
-  --padding: 0.5rem;
-  --y-line-offset: 0.5rem;
-  --y-space: 0.5rem;
 }
 
 h1, #status-banner {
