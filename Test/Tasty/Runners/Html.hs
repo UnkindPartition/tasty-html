@@ -183,11 +183,11 @@ generateHtml :: Summary  -- ^ Test summary.
 generateHtml summary time htmlPath mAssetsPath = do
 
   prologue <- case mAssetsPath of
-    Nothing -> includeStyle "data/style.css"
-    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "style.css") $ mempty
+    Nothing -> includeStyle "data/tasty.css"
+    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "tasty.css") $ mempty
   epilogue <- case mAssetsPath of
-    Nothing -> includeScript "data/script.js"
-    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "script.js") $ mempty
+    Nothing -> includeScript "data/tasty.js"
+    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "tasty.js") $ mempty
 
   TIO.writeFile htmlPath $
     renderHtml $
