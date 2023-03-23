@@ -7,7 +7,7 @@
 }
 
 html {
-  --border-style: 1px solid var(--border-col);
+  --border: 1px solid var(--border-col);
 
   --left-space: 0.7rem;
   --n-left-space: calc(0rem - var(--left-space));
@@ -18,10 +18,12 @@ html {
   --border-col: #aaa;
   --fail-col: #b23;
   --pass-col: #0a2;
-  --hover-group-bg: rgb(0, 0, 0, 0.15);
-  --hover-subgroup-bg: rgb(0, 0, 0, 0.05);
+  --fade: rgb(51, 51, 51, 0.8);
+  --highlight: rgb(0, 0, 0, 0.15);
+  --slight-highlight: rgb(0, 0, 0, 0.05);
+  --color: #333;
 
-  color: #333;
+  color: var(--color);
   background: #fff;
 
   font-family: Sans, sans-serif, Tahoma, Arial;
@@ -29,14 +31,15 @@ html {
 
 @media (prefers-color-scheme: dark) {
   html {
-    color: #ddd;
+    --color: #ddd;
     background: #1c1822;
 
     --border-col: #555;
     --fail-col: #f77;
     --pass-col: #9fb;
-    --hover-group-bg: rgb(255, 255, 255, 0.15);
-    --hover-subgroup-bg: rgb(255, 255, 255, 0.05);
+    --fade: rgb(221, 221, 221, 0.8);
+    --highlight: rgb(255, 255, 255, 0.15);
+    --slight-highlight: rgb(255, 255, 255, 0.05);
   }
 }
 
@@ -75,17 +78,17 @@ li {
 }
 
 .group:hover {
-  background: var(--hover-group-bg);
+  background: var(--highlight);
 }
 
 .group:hover + ul .group {
-  background: var(--hover-subgroup-bg);
+  background: var(--slight-highlight);
 }
 
 .group {
   cursor: pointer;
   display: block;
-  border: 1px solid var(--border-col);
+  border: var(--border);
   padding: var(--left-space);
 }
 
@@ -93,7 +96,7 @@ li {
   position: absolute;
   content: "";
   left: var(--n-left-space);
-  border-left: var(--border-style);
+  border-left: var(--border);
   width: var(--left-space);
 }
 
@@ -119,7 +122,7 @@ li {
 .group::before {
   --height: calc(var(--y-line-offset) + var(--y-space));
   top: calc(var(--y-line-offset) - var(--height));
-  border-bottom: var(--border-style);
+  border-bottom: var(--border);
   height: var(--height);
 }
 
@@ -138,4 +141,26 @@ li:last-child > .group::after,
 .group:not(.rollup) > .expand,
 .group:not(.rollup) ~ .ellipsis {
   display: none;
+}
+
+button {
+  padding: var(--padding);
+  background: var(--slight-highlight);
+  color: var(--color);
+  border: var(--border);
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--highlight);
+}
+
+button:disabled {
+  background: rgb(0,0,0,0);
+  color: var(--fade);
+  cursor: not-allowed;
+}
+
+#expand-all {
+  margin-bottom: 1rem;
 }

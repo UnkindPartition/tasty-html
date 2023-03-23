@@ -208,6 +208,7 @@ generateHtml summary time htmlPath mAssetsPath = do
           if summaryFailures summary > Sum 0
             then failureBanner
             else successBanner
+          H.button ! A.id "expand-all" ! A.class_ "hidden" $ "Expand all"
 
           H.toMarkup $ treeMarkup $ htmlRenderer summary
           epilogue
