@@ -13,16 +13,43 @@ extra-source-files:  README.md, CHANGELOG.md
 cabal-version:       >=1.10
 
 data-files:
-     data/bootstrap/dist/css/bootstrap.min.css
-     data/jquery-2.1.1.min.js
-     data/bootstrap/dist/js/bootstrap.min.js
      data/script.js
+     data/style.css
 
 source-repository head
   type: git
   location: git://github.com/feuerbach/tasty-html.git
 
+test-suite tasty-html-fail
+  default-language: Haskell98
+  type:    exitcode-stdio-1.0
+  main-is: fail.hs
+  hs-source-dirs: examples
+  build-depends:
+    base,
+    tasty,
+    tasty-hunit,
+    tasty-smallcheck,
+    tasty-quickcheck,
+    tasty-html,
+    blaze-html
+
+test-suite tasty-html-pass
+  default-language: Haskell98
+  type:    exitcode-stdio-1.0
+  main-is: pass.hs
+  hs-source-dirs: examples
+  build-depends:
+    base,
+    tasty,
+    tasty-hunit,
+    tasty-smallcheck,
+    tasty-quickcheck,
+    tasty-html,
+    blaze-html
+
 library
+  default-language: Haskell98
   exposed-modules: Test.Tasty.Runners.Html
   other-modules: Paths_tasty_html
   build-depends:
@@ -39,5 +66,4 @@ library
     text >= 1.0,
     transformers >= 0.3.0.0,
     blaze-html >= 0.7
-  default-language: Haskell98
   ghc-options: -Wall

@@ -7,20 +7,17 @@
 module Test.Tasty.Runners.Html
   ( HtmlPath(..)
   , htmlRunner
-  , AssetsPath(..)
   ) where
 
-import Control.Applicative (Const(..), (<$))
-import Control.Monad ((>=>), unless, forM_, when)
+import Control.Applicative (Const(..))
+import Control.Monad ((>=>), unless, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Concurrent.STM (atomically, readTVar)
 import qualified Control.Concurrent.STM as STM(retry)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Monoid(mempty,mappend), Sum(Sum,getSum))
-import Data.Semigroup ((<>))
+import Data.Monoid (Sum(Sum,getSum))
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
-import System.FilePath ((</>))
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.ByteString as B
 import Control.Monad.State (StateT, evalStateT, liftIO)
@@ -40,7 +37,7 @@ import Test.Tasty.Providers (IsTest, TestName)
 import qualified Test.Tasty.Runners as Tasty
 import qualified Test.Tasty.Ingredients as Tasty
 import Test.Tasty.Options as Tasty
-import Text.Blaze.Html5 (Markup, AttributeValue, (!))
+import Text.Blaze.Html5 (Markup, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
@@ -70,9 +67,7 @@ instance IsOption (Maybe AssetsPath) where
     optionName = Tagged "assets"
     optionHelp = Tagged "Directory where HTML assets will be looked up. \
                         \If not given the assets will be inlined within the \
-                        \HTML file. \
-                        \The following files must be present: \
-                        \`bootstrap.min.css`, `bootstrap.min.js`, `jquery-2.1.1.min.js`"
+                        \HTML file."
 
 {-| To run tests using this ingredient, use 'Tasty.defaultMainWithIngredients',
     passing 'htmlRunner' as one possible ingredient. This ingredient will run
@@ -162,8 +157,8 @@ runTest statusMap _ testName _ = Traversal $ Compose $ do
   msg <- liftIO . Tasty.formatMessage . Tasty.resultDescription $ result
   let time = Tasty.resultTime result
       summary = if Tasty.resultSuccessful result
-                then mkSuccess (testName, time) msg
-                else mkFailure (testName, time) msg
+                then mkSuccess testName time msg
+                else mkFailure testName time msg
 
   Const summary <$ State.modify (+1)
 
@@ -172,15 +167,8 @@ runGroup :: OptionSet -> TestName -> SummaryTraversal -> SummaryTraversal
 runGroup _opts groupName children = Traversal $ Compose $ do
   Const soFar <- getCompose $ getTraversal children
 
-  let (extra,text) = if summaryFailures soFar > Sum 0
-                        then ( "btn-danger"
-                             , "text-danger"
-                             )
-                        else ( "btn-success"
-                             , "text-success"
-                             )
-      grouped = testGroupMarkup groupName extra text $
-                  treeMarkup $ htmlRenderer soFar
+  let successful = summaryFailures soFar == Sum 0
+  let grouped = testGroupMarkup groupName successful $ treeMarkup $ htmlRenderer soFar
 
   return $ Const soFar { htmlRenderer = grouped }
 
@@ -190,21 +178,16 @@ runGroup _opts groupName children = Traversal $ Compose $ do
 generateHtml :: Summary  -- ^ Test summary.
              -> Tasty.Time -- ^ Total run time.
              -> FilePath -- ^ Where to write.
-             -> Maybe AssetsPath -- ^ Path to external assets
+             -> Maybe AssetsPath
              -> IO ()
 generateHtml summary time htmlPath mAssetsPath = do
-      -- Helpers to load external assets
-  let getRead = getDataFileName >=> B.readFile
-      includeMarkup = getRead >=> return . H.unsafeByteString
-      -- blaze-html 'script' doesn't admit HTML inside
-      includeScript = getRead >=> \bs ->
-        return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
 
-  -- Only used when no external assets path specified
-  bootStrapCss      <- includeMarkup "data/bootstrap/dist/css/bootstrap.min.css"
-  jQueryJs          <- includeScript "data/jquery-2.1.1.min.js"
-  bootStrapJs       <- includeScript "data/bootstrap/dist/js/bootstrap.min.js"
-  scriptJs          <- includeScript "data/script.js"
+  prologue <- case mAssetsPath of
+    Nothing -> includeStyle "data/tasty.css"
+    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "tasty.css") $ mempty
+  epilogue <- case mAssetsPath of
+    Nothing -> includeScript "data/tasty.js"
+    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "tasty.js") $ mempty
 
   TIO.writeFile htmlPath $
     renderHtml $
@@ -214,127 +197,114 @@ generateHtml summary time htmlPath mAssetsPath = do
           H.meta ! A.name "viewport"
                  ! A.content "width=device-width, initial-scale=1.0"
           H.title "Tasty Test Results"
+          prologue
 
           case mAssetsPath of
-            Nothing -> do H.style bootStrapCss
-                          jQueryJs
-                          bootStrapJs
-            Just (AssetsPath assetsPath) -> do
-              H.link ! A.rel "stylesheet"
-                     ! A.href (H.toValue $ assetsPath </> "bootstrap.min.css")
-              forM_ ["bootstrap.min.js", "jquery-2.1.1.min.js", "bootstrap.min.js"] $ \str ->
-                H.script ! A.src (H.toValue $ assetsPath </> str ) $ mempty
+            Nothing -> mempty
+            Just (AssetsPath _) -> mempty
 
         H.body $ do
-          H.div ! A.class_ "container" $ do
-            H.h1 ! A.class_ "text-center" $ "Tasty Test Results"
-            H.div ! A.class_ "row" $
-              if summaryFailures summary > Sum 0
-                then
-                  H.div ! A.class_ "alert alert-danger" $
-                    H.p ! A.class_ "lead text-center" $ do
-                      H.toMarkup . getSum $ summaryFailures summary
-                      " out of " :: Markup
-                      H.toMarkup tests
-                      " tests failed" :: Markup
-                      H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
-                else
-                  H.div ! A.class_ "alert alert-success" $
-                    H.p ! A.class_ "lead text-center" $ do
-                      "All " :: Markup
-                      H.toMarkup tests
-                      " tests passed" :: Markup
-                      H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+          H.h1 "Tasty Test Results"
+          if summaryFailures summary > Sum 0
+            then failureBanner
+            else successBanner
+          H.button ! A.id "expand-all" ! A.class_ "hidden" $ "Expand all"
 
-            H.div ! A.class_ "row" $
-              H.div ! A.class_ "well" $
-                H.toMarkup $ treeMarkup $ htmlRenderer summary
-          scriptJs
+          H.toMarkup $ treeMarkup $ htmlRenderer summary
+          epilogue
+  where
+    getRead = getDataFileName >=> B.readFile
 
- where
-  -- Total number of tests
-  tests = getSum $ summaryFailures summary <> summarySuccesses summary
+    includeScript = getRead >=> \bs ->
+      return . H.unsafeByteString $ "<script>" <> bs <> "</script>"
+
+    includeStyle path = do
+      bs <- getRead path
+      pure $ H.style $ H.unsafeByteString bs
+
+    failureBanner = H.div ! A.id "status-banner" ! A.class_ "fail" $ do
+      H.toMarkup . getSum $ summaryFailures summary
+      " out of " :: Markup
+      H.toMarkup tests
+      " tests failed" :: Markup
+      H.span $ H.toMarkup $ formatTime time
+
+    successBanner = H.div ! A.id "status-banner" ! A.class_ "pass" $ do
+      "All " :: Markup
+      H.toMarkup tests
+      " tests passed" :: Markup
+      H.span $ H.toMarkup $ formatTime time
+
+    tests = getSum $ summaryFailures summary <> summarySuccesses summary
 
 -- | Set the 'htmlRenderer' of a 'Summary' with the given 'Markup'.
 mkSummary :: Markup -> Summary
-mkSummary contents = mempty { htmlRenderer = itemMarkup contents }
+mkSummary contents = mempty { htmlRenderer = contents }
 
 -- | Create an HTML 'Summary' with a test success.
-mkSuccess :: (TestName, Tasty.Time)
+mkSuccess :: TestName
+          -> Tasty.Time
           -> String -- ^ Description for the test.
           -> Summary
-mkSuccess nameAndTime desc =
-      ( mkSummary $ testItemMarkup
-          nameAndTime
-          (desc, "text-muted")
-          "glyphicon-ok-sign"
-          "btn-success"
-          "text-success"
-      ) { summarySuccesses = Sum 1 }
+mkSuccess name time desc = summary { summarySuccesses = Sum 1 }
+  where
+    summary = mkSummary $ testItemMarkup name True time desc
 
 -- | Create an HTML 'Summary' with a test failure.
-mkFailure :: (TestName, Tasty.Time)
+mkFailure :: TestName
+          -> Tasty.Time
           -> String -- ^ Description for the test.
           -> Summary
-mkFailure nameAndTime desc =
-      ( mkSummary $ testItemMarkup
-          nameAndTime
-          (desc, "text-danger")
-          "glyphicon-remove-sign"
-          "btn-danger"
-          "text-danger"
-      ) { summaryFailures = Sum 1 }
+mkFailure name time desc = summary { summaryFailures = Sum 1 }
+  where
+    summary = mkSummary $ testItemMarkup name False time desc
 
 -- | Markup representing the branching of a /tree/.
 treeMarkup :: Markup -> Markup
-treeMarkup rest =
-  H.div ! A.class_ "media collapse in" $
-    H.ul ! A.class_ "media-list" $
-      rest
-
--- | Markup representing an /item/ in a /tree/.
-itemMarkup :: Markup -> Markup
-itemMarkup = H.li ! A.class_ "media"
-
-type CssDescription = (String, AttributeValue)
-type CssIcon  = AttributeValue
-type CssExtra = AttributeValue
-type CssText  = AttributeValue
-
--- | Markup for a button.
-buttonMarkup :: CssExtra -> CssIcon -> Markup
-buttonMarkup extra icon =
-  H.button ! A.type_ "button"
-           ! A.class_ ("btn btn-xs pull-left media-object " <> extra)
-           $ H.span ! A.class_ ("glyphicon " <> icon) $ ""
+treeMarkup = H.ul
 
 -- | Markup for a test group.
-testGroupMarkup :: TestName -> CssExtra -> CssText -> Markup -> Markup
-testGroupMarkup groupName extra text body =
-    H.li ! A.class_ "media" $ do
-      buttonMarkup (extra <> " collapsible") "glyphicon-folder-open"
-      H.div ! A.class_ "media-body" $ do
-        H.h4 ! A.class_ ("media-heading " <> text) $
-          H.toMarkup groupName
-        body
+testGroupMarkup :: TestName -> Bool -> Markup -> Markup
+testGroupMarkup groupName successful body =
+  H.li $ do
+    H.h4 ! className $ do
+      H.toMarkup groupName
+      H.span ! A.class_ "expand" $ " (click to expand)"
+    body
+    H.div ! A.class_ "ellipsis" $ H.preEscapedText "&#x2026;" -- "…"
+
+  where
+    className :: H.Attribute
+    className = classNames $ ["group"] <> ["fail" | not successful]
+
+classNames :: [String] -> H.Attribute
+classNames = A.class_ . H.toValue . unwords
 
 -- | Markup for a single test.
-testItemMarkup :: (TestName, Tasty.Time)
-               -> CssDescription
-               -> CssIcon
-               -> CssExtra
-               -> CssText
+testItemMarkup :: TestName
+               -> Bool
+               -> Tasty.Time
+               -> String
                -> Markup
-testItemMarkup (testName,time) (desc,desca) icon extra text = do
-  buttonMarkup extra icon
-  H.div ! A.class_ "media-body" $ do
-    H.h5 ! A.class_ ("media-heading " <> text) $ do
-      H.toMarkup testName
-      when (time >= 0.01) $
-        H.span ! A.class_ "text-muted" $ H.toMarkup (formatTime time)
+testItemMarkup testName successful time desc = do
+  H.li ! className $ do
+    -- for check mark / cross
+    H.div ! A.class_ "mark" $ H.preEscapedText $
+      if successful
+      then "&#x2713;" -- "✓"
+      else "&#x2715;" -- "✕"
+    H.div $ do
+      H.h5 $ do
+        H.toMarkup testName
+        when (time >= 0.01) $
+          H.span $ H.toMarkup (formatTime time)
 
-    unless (null desc) $
-      H.pre $ H.small ! A.class_ desca $ H.toMarkup desc
+      unless (null desc) $
+        H.pre $ H.small $ H.toMarkup desc
+
+  where
+    className :: H.Attribute
+    className = classNames $ ["item"] <> ["fail" | not successful]
 
 formatTime :: Tasty.Time -> String
 formatTime = printf " (%.2fs)"

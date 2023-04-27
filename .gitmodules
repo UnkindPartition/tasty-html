@@ -1,3 +1,0 @@
-[submodule "bootstrap"]
-	path = data/bootstrap
-	url = git://github.com/jdnavarro/bootstrap

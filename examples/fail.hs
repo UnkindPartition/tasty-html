@@ -15,7 +15,10 @@ tests :: TestTree
 tests = testGroup "Tests" [properties, unitTests]
 
 properties :: TestTree
-properties = testGroup "Properties" [scProps, qcProps]
+properties = testGroup "Properties" [p, scProps, qcProps]
+
+p = SC.testProperty "Fermat's little theorem" $
+      \x -> ((x :: Integer)^7 - x) `mod` 7 == 0
 
 scProps = testGroup "SmallCheck"
   [ SC.testProperty "sort == sort . reverse" $
