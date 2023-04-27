@@ -1,3 +1,16 @@
+0.4.2.0 - 2023-04-27
+--------------------
+
+* Remove Bootstrap
+* Remove JQuery
+* Style overhaul
+* Visual tree heirarchy indication
+* Ellide tree paths that don't lead to failed tests on load
+* 'Expand all' button
+* Highlight descendents of groups on hover
+* Output less DOM nodes
+* Automatic dark/light theme via the `prefers-color-scheme` media query
+
 0.4.1.4 - 2021-01-13
 --------------------
 
