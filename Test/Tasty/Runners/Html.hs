@@ -184,7 +184,7 @@ generateHtml summary time htmlPath mAssetsPath = do
 
   prologue <- case mAssetsPath of
     Nothing -> includeStyle "data/tasty.css"
-    Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "tasty.css") $ mempty
+    Just (AssetsPath path) -> pure $ H.link ! A.rel "stylesheet" ! A.href (H.toValue $ path <> "/" <> "tasty.css")
   epilogue <- case mAssetsPath of
     Nothing -> includeScript "data/tasty.js"
     Just (AssetsPath path) -> pure $ H.script ! A.src (H.toValue $ path <> "/" <> "tasty.js") $ mempty
