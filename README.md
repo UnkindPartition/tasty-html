@@ -76,7 +76,7 @@ determined by chance.)
 
 ```
 $ git clone --recursive https://github.com/feuerbach/tasty-html
-$ cabal test tasty-html-pass --test-options='--html pass.html'
-$ cabal test tasty-html-fail --test-options='--html fail.html'
+$ cabal run tasty-html-pass -- --html pass.html
+$ cabal run tasty-html-fail -- --html fail.html
 $ firefox pass.html fail.html
 ```
