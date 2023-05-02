@@ -1,3 +1,9 @@
+0.4.2.0 - 2023-05-02
+--------------------
+
+* Remove flaky `pass` test
+* Turn example tests into executables
+
 0.4.2.0 - 2023-04-27
 --------------------
 
