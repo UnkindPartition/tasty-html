@@ -1,25 +1,22 @@
 module Main where
 
+import Data.List
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.SmallCheck as SC
 import Test.Tasty.QuickCheck as QC
 import Test.Tasty.Runners.Html
 
-import Data.List
-import Data.Ord
-
+main :: IO ()
 main = defaultMainWithIngredients (htmlRunner:defaultIngredients) tests
 
 tests :: TestTree
 tests = testGroup "Tests" [properties, unitTests]
 
 properties :: TestTree
-properties = testGroup "Properties" [p, scProps, qcProps]
+properties = testGroup "Properties" [scProps, qcProps]
 
-p = SC.testProperty "Fermat's little theorem" $
-      \x -> ((x :: Integer)^7 - x) `mod` 7 == 0
-
+scProps :: TestTree
 scProps = testGroup "SmallCheck"
   [ SC.testProperty "sort == sort . reverse" $
       \list -> sort (list :: [Int]) == sort (reverse list)
@@ -31,6 +28,7 @@ scProps = testGroup "SmallCheck"
         (n :: Integer) >= 3 SC.==> x^n + y^n /= (z^n :: Integer)
   ]
 
+qcProps :: TestTree
 qcProps = testGroup "QuickCheck"
   [ QC.testProperty "sort == sort . reverse" $
       \list -> sort (list :: [Int]) == sort (reverse list)
@@ -42,6 +40,7 @@ qcProps = testGroup "QuickCheck"
         (n :: Integer) >= 3 QC.==> x^n + y^n /= (z^n :: Integer)
   ]
 
+unitTests :: TestTree
 unitTests = testGroup "Unit tests"
   [ testCase "List comparison (different length)" $
       [1, 2, 3] `compare` [1,2] @?= GT
