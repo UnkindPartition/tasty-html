@@ -60,7 +60,7 @@ library
     stm >= 2.4.2,
     semigroups,
     tagged >= 0.7,
-    tasty >= 1.4,
+    tasty >= 1.5 && < 1.6,
     text >= 1.0,
     transformers >= 0.3.0.0,
     blaze-html >= 0.7
