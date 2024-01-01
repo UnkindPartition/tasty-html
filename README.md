@@ -67,7 +67,7 @@ giving it the html file path:
 
 Here is the output of the above program rendered to HTML:
 
-![screenshot](https://user-images.githubusercontent.com/1714287/232209106-1be5cf5c-983c-46ba-a9cd-062b4786b0d0.png)
+![screenshot](https://raw.githubusercontent.com/UnkindPartition/tasty-html/master/screenshot.png)
 
 (Note that whether QuickCheck finds a counterexample to the third property is
 determined by chance.)
